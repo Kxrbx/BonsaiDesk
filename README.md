@@ -3,80 +3,96 @@
 [![CI](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml/badge.svg)](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-a7f3c8.svg)](./LICENSE)
 
-Local chat app for running `prism-ml/Bonsai-8B-gguf` on your own machine with a polished ChatGPT-like interface, a local Prism runtime manager, and persistent conversations.
+Local-first chat app for running `prism-ml/Bonsai-8B-gguf` with a polished ChatGPT-like interface, a built-in Prism runtime manager, and persistent conversation history.
 
-Repository: `https://github.com/Kxrbx/BonsaiDesk`
+Repo: `https://github.com/Kxrbx/BonsaiDesk`
 
-## Why This Project Exists
+## What Bonsai Desk Does
 
-Bonsai Desk packages the Bonsai + Prism local workflow into a product-shaped app instead of a loose collection of scripts.
+Bonsai Desk turns the Bonsai + Prism local workflow into an actual product instead of a folder of scripts.
 
 It gives you:
 
-- a clean chat interface designed for daily local use
-- guided runtime and model installation
-- a runtime control modal for tuning Prism/Bonsai settings
-- local conversation history with no cloud dependency
-- a Windows-first setup that follows the public Bonsai demo runtime flow
+- a modern local chat UI with conversation history
+- a guided setup flow for the Prism runtime and Bonsai GGUF model
+- a runtime control modal for tuning inference parameters
+- local persistence for settings and conversations
+- support for both official downloads and already-existing local files
 
-## What It Includes
+## Current Scope
 
-- `backend/`: FastAPI API, runtime orchestration, streaming proxy, SQLite persistence
-- `frontend/`: React + Vite client with chat UI, setup screen, runtime modal, and conversation sidebar
-- `scripts/`: bootstrap, dev launch, and local verification scripts
-- `.github/`: CI workflow, issue templates, and PR template for GitHub sharing
+This project is currently optimized for:
 
-## Current Product Scope
-
-Bonsai Desk is currently built for:
-
-- local single-user usage
-- Windows development and runtime flow
+- Windows local usage
+- a single local user
 - Prism-powered `llama-server`
 - Bonsai GGUF models, starting with `Bonsai-8B.gguf`
 
-By default the app stores state in `.bonsai-desk/`. If an older `.prism-launcher/` directory already exists, Bonsai Desk reuses it automatically for compatibility, including the legacy `prism_launcher.db` database and older UI preference keys.
+State is stored in `.bonsai-desk/` by default. If an older `.prism-launcher/` directory already exists, Bonsai Desk reuses it automatically for compatibility, including the legacy `prism_launcher.db` file and previous UI preference keys.
 
-## Feature Highlights
+## Stack
 
-- ChatGPT-like chat layout with conversation history
-- local runtime install/start/stop flow
+- `backend/`: FastAPI API, runtime orchestration, streaming proxy, SQLite persistence
+- `frontend/`: React + Vite client with chat UI, setup experience, and runtime modal
+- `scripts/`: bootstrap, dev launch, and local verification scripts
+- `.github/`: CI workflow, issue templates, and PR template
+
+## Highlights
+
+- ChatGPT-style chat experience
 - streaming responses
+- install/start/stop/restart runtime controls
 - persistent runtime parameters across sessions
-- runtime presets: `demo`, `power`, `max`
+- presets for `demo`, `power`, and `max`
 - runtime logs and health feedback
-- support for Prism-specific options such as thinking mode and reasoning format
-- official download flow or local file linking from the setup screen
+- setup flow with local file linking for `llama-server.exe` and `.gguf`
 
 ## Quick Start
 
-1. Optionally copy values from [.env.example](./.env.example)
+1. Optionally review [.env.example](./.env.example)
 2. Install dependencies:
 
 ```powershell
 .\scripts\bootstrap.ps1
 ```
 
-3. Start the app in development:
+3. Start the app:
 
 ```powershell
 .\scripts\run-dev.ps1
 ```
 
 4. Open `http://127.0.0.1:5173`
-5. Install or start the local runtime from the setup flow
+5. Complete setup or link existing local assets
 
-You can also launch backend + frontend windows and open the browser with:
+You can also start both windows and open the browser automatically with:
 
 ```powershell
 .\launch-app.bat
 ```
 
-## Runtime Notes
+## Setup Paths
 
-Runtime resolution order:
+Bonsai Desk supports two setup flows from the installation screen:
 
-1. linked local runtime chosen in the UI
+### 1. Official download flow
+
+The app downloads upstream assets directly from the official Prism/Bonsai sources and shows their origin before the download starts.
+
+### 2. Use existing local files
+
+The app can link:
+
+- an existing Prism-compatible `llama-server.exe`
+- an existing local `.gguf` model
+
+This does not copy or re-host those files. Bonsai Desk stores and uses the selected paths.
+
+## Runtime Resolution Order
+
+Runtime resolution currently prefers:
+
+1. local runtime linked from the UI
 2. managed runtime already installed by Bonsai Desk
 3. `PRISM_LLAMA_SERVER_PATH`
 4. official Prism/Bonsai demo release metadata
@@ -89,21 +105,23 @@ Default model source:
 - file: `Bonsai-8B.gguf`
 - URL: `https://huggingface.co/prism-ml/Bonsai-8B-gguf/resolve/main/Bonsai-8B.gguf?download=true`
 
-The setup screen also lets users link an existing local `llama-server.exe` and `.gguf` model instead of downloading them again.
+## Transparency, Sources, and Licenses
 
-## Sources And Licenses
+Bonsai Desk downloads official assets directly from their upstream sources and does not re-host them.
 
-Bonsai Desk downloads official assets directly from their upstream sources and does not re-host them:
+Current upstream sources referenced by the app:
 
-- Bonsai model card: `prism-ml/Bonsai-8B-gguf` on Hugging Face, license shown as `Apache-2.0`
-- Prism Bonsai demo repo: `PrismML-Eng/Bonsai-demo`, license shown as `Apache-2.0`
-- Prism `llama.cpp` fork: `PrismML-Eng/llama.cpp`, license shown as `MIT`
+- Bonsai model card: `prism-ml/Bonsai-8B-gguf` on Hugging Face, shown as `Apache-2.0`
+- Prism Bonsai demo repo: `PrismML-Eng/Bonsai-demo`, shown as `Apache-2.0`
+- Prism `llama.cpp` fork: `PrismML-Eng/llama.cpp`, shown as `MIT`
 
-The setup screen makes this explicit before official downloads start, and also offers a separate flow to link an existing local runtime/model without copying those files into the app.
+The setup screen makes this explicit before official downloads start and provides a separate local-linking flow for users who already have the runtime or model on disk.
 
-Users remain responsible for complying with the upstream licenses and usage terms of the downloaded assets.
+Users remain responsible for complying with upstream licenses and terms for the downloaded assets.
 
-## Runtime Controls In The UI
+## Runtime Controls
+
+The UI currently exposes:
 
 - system prompt
 - temperature
@@ -118,23 +136,23 @@ Users remain responsible for complying with the upstream licenses and usage term
 - reasoning format
 - thinking mode
 
-The UI separates request-time parameters from runtime-start parameters where that distinction matters.
+Request-time parameters and runtime-start parameters are intentionally kept distinct where needed.
 
 ## Configuration
 
-Useful variables:
+Useful environment variables:
 
 - `BONSAI_DESK_HOME`: override the app data directory
-- `PRISM_LAUNCHER_HOME`: legacy app-home alias still supported
+- `PRISM_LAUNCHER_HOME`: legacy alias still supported
 - `PRISM_LLAMA_SERVER_PATH`: point to an existing Prism-compatible `llama-server.exe`
 - `PRISM_LLAMA_CPP_ZIP_URL`: use a custom runtime archive
-- `VITE_API_BASE_URL`: override the frontend API base for nondefault deployments
+- `VITE_API_BASE_URL`: override the frontend API base
 
-See [.env.example](./.env.example) for the current full list.
+See [.env.example](./.env.example) for the full list.
 
-## Local Verification
+## Development
 
-Run before sharing changes:
+Run local verification before pushing:
 
 ```powershell
 .\scripts\check.ps1
@@ -142,9 +160,11 @@ Run before sharing changes:
 
 This runs backend tests and a production frontend build.
 
+Contribution notes live in [CONTRIBUTING.md](./CONTRIBUTING.md).
+
 ## Known Limitations
 
-- Windows is the primary target today
+- Windows is the primary target
 - one active local runtime instance
 - no desktop packaging yet
 - no multi-user or hosted deployment flow yet
@@ -152,14 +172,10 @@ This runs backend tests and a production frontend build.
 ## Roadmap
 
 - add Bonsai model-size switching (`8B / 4B / 1.7B`)
-- improve runtime install transparency and diagnostics
-- continue UI polish and responsive behavior work
+- improve runtime diagnostics and install feedback
+- continue UI polish and responsive cleanup
 - add stronger frontend coverage around runtime state and streaming flows
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](./LICENSE).
