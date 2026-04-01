@@ -1,8 +1,11 @@
 # Bonsai Desk
 
-**Suggested GitHub repository name:** `bonsai-desk`
+[![CI](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml/badge.svg)](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-a7f3c8.svg)](./LICENSE)
 
 Local chat app for running `prism-ml/Bonsai-8B-gguf` on your own machine with a polished ChatGPT-like interface, a local Prism runtime manager, and persistent conversations.
+
+Repository: `https://github.com/Kxrbx/BonsaiDesk`
 
 ## Why This Project Exists
 
@@ -43,6 +46,7 @@ By default the app stores state in `.bonsai-desk/`. If an older `.prism-launcher
 - runtime presets: `demo`, `power`, `max`
 - runtime logs and health feedback
 - support for Prism-specific options such as thinking mode and reasoning format
+- official download flow or local file linking from the setup screen
 
 ## Quick Start
 
@@ -72,11 +76,12 @@ You can also launch backend + frontend windows and open the browser with:
 
 Runtime resolution order:
 
-1. managed runtime already installed by Bonsai Desk
-2. `PRISM_LLAMA_SERVER_PATH`
-3. official Prism/Bonsai demo release metadata
-4. `PRISM_LLAMA_CPP_ZIP_URL`
-5. `llama-server.exe` found on `PATH`
+1. linked local runtime chosen in the UI
+2. managed runtime already installed by Bonsai Desk
+3. `PRISM_LLAMA_SERVER_PATH`
+4. official Prism/Bonsai demo release metadata
+5. `PRISM_LLAMA_CPP_ZIP_URL`
+6. `llama-server.exe` found on `PATH`
 
 Default model source:
 
@@ -137,24 +142,6 @@ Run before sharing changes:
 
 This runs backend tests and a production frontend build.
 
-## GitHub Publishing
-
-Recommended repository:
-
-- name: `bonsai-desk`
-- description: `Local Prism-powered chat app for Bonsai GGUF models`
-
-Suggested initial flow:
-
-```powershell
-git init
-git branch -M main
-git add .
-git commit -m "Initial Bonsai Desk import"
-git remote add origin https://github.com/<your-user>/bonsai-desk.git
-git push -u origin main
-```
-
 ## Known Limitations
 
 - Windows is the primary target today
@@ -172,3 +159,7 @@ git push -u origin main
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+## License
+
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
