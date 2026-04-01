@@ -7,6 +7,8 @@ Local-first chat app for running `prism-ml/Bonsai-8B-gguf` with a polished ChatG
 
 Repo: `https://github.com/Kxrbx/BonsaiDesk`
 
+<img width="1690" height="956" alt="image" src="https://github.com/user-attachments/assets/2cb464c3-60d8-4724-8dbd-5ad79587eb72" />
+
 ## What Bonsai Desk Does
 
 Bonsai Desk turns the Bonsai + Prism local workflow into an actual product instead of a folder of scripts.
