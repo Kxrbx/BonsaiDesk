@@ -1,3 +1,10 @@
+"""Chat service for handling conversation and message streaming.
+
+This module provides the ChatService class which manages conversation
+history, interfaces with the runtime for inference, and handles
+streaming responses to clients.
+"""
+
 from __future__ import annotations
 
 import json
@@ -11,11 +18,41 @@ from app.db.storage import Storage
 
 
 class ChatService:
+    """Service for managing chat conversations and streaming.
+    
+    This class handles all chat-related operations including:
+    - Conversation creation and management
+    - Message history tracking
+    - Streaming inference via the runtime
+    - Response formatting and event generation
+    
+    Attributes:
+        storage: Storage instance for persistence.
+        runtime_manager: RuntimeManager instance for runtime control.
+    """
+    
     def __init__(self, storage: Storage, runtime_manager: RuntimeManager) -> None:
+        """Initialize the chat service.
+        
+        Args:
+            storage: Storage instance for database operations.
+            runtime_manager: RuntimeManager for runtime control.
+        """
         self.storage = storage
         self.runtime_manager = runtime_manager
 
     def _resolve_config(self, request: ChatGenerationRequest) -> RuntimeConfig:
+        """Resolve runtime configuration from request overrides.
+        
+        Takes the base runtime configuration and applies any
+        request-specific overrides for inference parameters.
+        
+        Args:
+            request: The chat generation request with optional overrides.
+            
+        Returns:
+            RuntimeConfig: The resolved configuration.
+        """
         config = self.runtime_manager.get_runtime_config()
         if request.override_system_prompt is not None:
             config.system_prompt = request.override_system_prompt
@@ -32,6 +69,21 @@ class ChatService:
         return config
 
     def _history_messages(self, conversation_id: str, system_prompt: str) -> list[dict[str, str]]:
+        """Build message history for the runtime API.
+        
+        Retrieves conversation messages and formats them for the
+        OpenAI-compatible chat completions API.
+        
+        Args:
+            conversation_id: ID of the conversation.
+            system_prompt: System prompt to include.
+            
+        Returns:
+            list[dict[str, str]]: List of message dictionaries.
+            
+        Raises:
+            RuntimeError: If conversation not found.
+        """
         conversation = self.storage.get_conversation(conversation_id)
         if not conversation:
             raise RuntimeError("Conversation not found.")
@@ -44,6 +96,24 @@ class ChatService:
         return messages
 
     async def stream_chat(self, request: ChatGenerationRequest) -> AsyncIterator[str]:
+        """Stream a chat response.
+        
+        Handles the complete flow of processing a chat request:
+        1. Ensures runtime is running
+        2. Creates or retrieves conversation
+        3. Sends request to runtime
+        4. Streams response tokens back to client
+        5. Saves the complete response
+        
+        Args:
+            request: The chat generation request.
+            
+        Yields:
+            str: Server-sent event formatted strings.
+            
+        Raises:
+            RuntimeError: If runtime not installed or conversation not found.
+        """
         status = await self.runtime_manager.get_status()
         if not status.installed:
             raise RuntimeError("Runtime is not installed yet.")
@@ -130,4 +200,12 @@ class ChatService:
 
     @staticmethod
     def _format_event(event: ChatStreamEvent) -> str:
-        return f"data: {event.model_dump_json()}\n\n"
+        """Format a chat event as a server-sent event.
+        
+        Args:
+            event: The chat event to format.
+            
+        Returns:
+            str: Formatted SSE string.
+        """
+        return f"data: {event.model_dump
