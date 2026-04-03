@@ -18,19 +18,22 @@ export function Composer({
   return (
     <div className="composer-shell">
       <div className="composer-shell__inner">
-        <textarea
-          className="composer"
-          placeholder="Message Bonsai locally..."
-          value={draft}
-          disabled={disabled}
-          onChange={(event) => onDraftChange(event.target.value)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              onSubmit();
-            }
-          }}
-        />
+        <label className="composer__label">
+          <span className="sr-only">Message Bonsai locally</span>
+          <textarea
+            className="composer"
+            placeholder="Message Bonsai locally..."
+            value={draft}
+            disabled={disabled}
+            onChange={(event) => onDraftChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                onSubmit();
+              }
+            }}
+          />
+        </label>
       </div>
       <div className="composer__actions">
         <p>Shift+Enter for a newline</p>

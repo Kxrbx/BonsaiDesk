@@ -30,11 +30,15 @@ function field(
   onChange: (nextValue: string) => void,
   type = "text",
   multiline = false,
-  hint?: string
+  hint?: string,
+  fieldName?: string
 ) {
   const commonProps = {
     value,
+    name: fieldName,
+    autoComplete: "off" as const,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value),
+    ...(type === "number" && { inputMode: "decimal" as const }),
   };
 
   return (
@@ -55,12 +59,13 @@ function selectField(
   value: string | number,
   onChange: (nextValue: string) => void,
   options: Array<{ value: string; label: string }>,
-  hint?: string
+  hint?: string,
+  fieldName?: string
 ) {
   return (
     <label className="config-field">
       <span>{label}</span>
-      <select value={String(value)} onChange={(event) => onChange(event.target.value)}>
+      <select name={fieldName} value={String(value)} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -328,6 +333,8 @@ export function RuntimePanel({
                     (next) => onChange({ ...runtimeConfig, system_prompt: next }),
                     "text",
                     true,
+                    undefined,
+                    "system_prompt",
                   )}
                 </section>
 
@@ -337,11 +344,11 @@ export function RuntimePanel({
                     <span>Preset buttons update these values immediately in the form.</span>
                   </div>
                   <div className="config-grid config-grid--compact">
-                    {field("Temperature", runtimeConfig.temperature, (next) => onChange({ ...runtimeConfig, temperature: Number(next) }), "number")}
-                    {field("Top-k", runtimeConfig.top_k, (next) => onChange({ ...runtimeConfig, top_k: Number(next) }), "number")}
-                    {field("Top-p", runtimeConfig.top_p, (next) => onChange({ ...runtimeConfig, top_p: Number(next) }), "number")}
-                    {field("Min-p", runtimeConfig.min_p, (next) => onChange({ ...runtimeConfig, min_p: Number(next) }), "number")}
-                    {field("Max tokens", runtimeConfig.max_tokens, (next) => onChange({ ...runtimeConfig, max_tokens: Number(next) }), "number")}
+                    {field("Temperature", runtimeConfig.temperature, (next) => onChange({ ...runtimeConfig, temperature: Number(next) }), "number", false, undefined, "temperature")}
+                    {field("Top-k", runtimeConfig.top_k, (next) => onChange({ ...runtimeConfig, top_k: Number(next) }), "number", false, undefined, "top_k")}
+                    {field("Top-p", runtimeConfig.top_p, (next) => onChange({ ...runtimeConfig, top_p: Number(next) }), "number", false, undefined, "top_p")}
+                    {field("Min-p", runtimeConfig.min_p, (next) => onChange({ ...runtimeConfig, min_p: Number(next) }), "number", false, undefined, "min_p")}
+                    {field("Max tokens", runtimeConfig.max_tokens, (next) => onChange({ ...runtimeConfig, max_tokens: Number(next) }), "number", false, undefined, "max_tokens")}
                   </div>
                 </section>
 
@@ -351,7 +358,7 @@ export function RuntimePanel({
                     <span>Used when the local server starts or restarts.</span>
                   </div>
                   <div className="config-grid config-grid--compact">
-                    {field("Model filename", runtimeConfig.model_filename, (next) => onChange({ ...runtimeConfig, model_filename: next }))}
+                    {field("Model filename", runtimeConfig.model_filename, (next) => onChange({ ...runtimeConfig, model_filename: next }), "text", false, undefined, "model_filename")}
                     {field(
                       "Context",
                       runtimeConfig.ctx_size,
@@ -359,9 +366,10 @@ export function RuntimePanel({
                       "number",
                       false,
                       "0 keeps Prism auto-fit enabled",
+                      "ctx_size",
                     )}
-                    {field("GPU layers", runtimeConfig.gpu_layers, (next) => onChange({ ...runtimeConfig, gpu_layers: Number(next) }), "number")}
-                    {field("Threads", runtimeConfig.threads, (next) => onChange({ ...runtimeConfig, threads: Number(next) }), "number")}
+                    {field("GPU layers", runtimeConfig.gpu_layers, (next) => onChange({ ...runtimeConfig, gpu_layers: Number(next) }), "number", false, undefined, "gpu_layers")}
+                    {field("Threads", runtimeConfig.threads, (next) => onChange({ ...runtimeConfig, threads: Number(next) }), "number", false, undefined, "threads")}
                   </div>
                 </section>
 
@@ -380,8 +388,9 @@ export function RuntimePanel({
                         { value: "0", label: "Disabled (0)" },
                       ],
                       "Current Prism runtime only supports -1 or 0 for this flag.",
+                      "reasoning_budget",
                     )}
-                    {field("Reasoning format", runtimeConfig.reasoning_format, (next) => onChange({ ...runtimeConfig, reasoning_format: next }))}
+                    {field("Reasoning format", runtimeConfig.reasoning_format, (next) => onChange({ ...runtimeConfig, reasoning_format: next }), "text", false, undefined, "reasoning_format")}
                   </div>
                   <label className="toggle-field">
                     <input

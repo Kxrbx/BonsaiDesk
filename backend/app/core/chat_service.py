@@ -208,4 +208,4 @@ class ChatService:
         Returns:
             str: Formatted SSE string.
         """
-        return f"data: {event.model_dump
+        return f"data: {event.model_dump_json()}\n\n"

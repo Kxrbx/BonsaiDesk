@@ -392,7 +392,7 @@ export default function App() {
       <main className="setup-screen">
         <section className="setup-hero">
           <p className="eyebrow">Bonsai Desk</p>
-          <h1>Loading local runtime state...</h1>
+          <h1>Loading local runtime state…</h1>
           <p>Checking the installed model, runtime binary and saved conversations before opening the app.</p>
         </section>
       </main>
@@ -408,7 +408,7 @@ export default function App() {
           <p>
             The frontend could not load the local backend state. Start the backend first, then reload the page.
           </p>
-          {error ? <div className="notice notice--error">{error}</div> : null}
+          {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
         </section>
       </main>
     );
@@ -471,7 +471,7 @@ export default function App() {
           </div>
         </header>
 
-        {error ? <div className="notice notice--error">{error}</div> : null}
+        {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
 
         <div className="chat-scroll-area">
           <MessageList messages={visibleMessages} streamingText={streamingText} isSending={isSending} />

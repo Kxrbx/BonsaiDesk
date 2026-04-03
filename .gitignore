@@ -16,4 +16,6 @@ backend/.pytest_cache/
 backend/.mypy_cache/
 .prism-launcher/
 .bonsai-desk/
+.npm-cache/
+.tmp/
 .tmp-*/

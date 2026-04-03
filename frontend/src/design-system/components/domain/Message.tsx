@@ -27,10 +27,10 @@ const roleColors: Record<MessageRole, string> = {
 };
 
 function formatTime(date: Date): string {
-  return date.toLocaleTimeString([], {
+  return new Intl.DateTimeFormat([], {
     hour: "2-digit",
     minute: "2-digit",
-  });
+  }).format(date);
 }
 
 export function Message({
@@ -69,18 +69,19 @@ export function Message({
         boxShadow: "var(--shadow-md)",
       }}
     >
-      <Text
+      <Box
         as="header"
-        variant="caption"
-        weight="semibold"
         style={{
+          fontFamily: "var(--font-sans)",
+          fontSize: "0.75rem",
+          fontWeight: 600,
           color: roleColors[role],
           letterSpacing: "0.08em",
           textTransform: "uppercase",
         }}
       >
         {roleLabels[role]}
-      </Text>
+      </Box>
 
       <Box
         as="pre"
@@ -93,7 +94,7 @@ export function Message({
           color: "var(--color-text-primary)",
         }}
       >
-        {content || (isStreaming ? "Thinking..." : children)}
+        {content || (isStreaming ? "Thinking…" : children)}
       </Box>
 
       {(timestamp || status === "streaming") && (
@@ -110,7 +111,7 @@ export function Message({
         >
           <Text variant="caption" color="tertiary">
             {timestamp && `• ${formatTime(timestamp)}`}
-            {isStreaming && !timestamp && "• Generating..."}
+            {isStreaming && !timestamp && "• Generating…"}
           </Text>
 
           {role === "assistant" && status === "complete" && (
@@ -124,7 +125,7 @@ export function Message({
                   color: "var(--color-text-tertiary)",
                   fontSize: "0.75rem",
                   cursor: "pointer",
-                  transition: "all var(--duration-fast) var(--ease-default)",
+                  transition: "border-color var(--duration-fast) var(--ease-default), color var(--duration-fast) var(--ease-default)",
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.borderColor = "var(--color-border-default)";

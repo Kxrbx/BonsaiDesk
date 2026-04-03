@@ -10,12 +10,12 @@ interface SidebarProps {
 }
 
 function formatDate(value: string): string {
-  return new Date(value).toLocaleString([], {
+  return new Intl.DateTimeFormat([], {
     month: "short",
     day: "numeric",
     hour: "2-digit",
     minute: "2-digit"
-  });
+  }).format(new Date(value));
 }
 
 export function Sidebar({
@@ -55,37 +55,28 @@ export function Sidebar({
             <div
               key={conversation.id}
               className={`conversation-card ${selected ? "conversation-card--active" : ""}`}
-              onClick={() => onSelect(conversation.id)}
-              onKeyDown={(event) => {
-                if (event.key === "Enter" || event.key === " ") {
-                  event.preventDefault();
-                  onSelect(conversation.id);
-                }
-              }}
-              role="button"
-              tabIndex={0}
             >
-              <div className="conversation-card__top">
-                <strong>{conversation.title}</strong>
-                <span>{formatDate(conversation.updated_at)}</span>
-              </div>
-              <p>{conversation.preview || "No messages yet."}</p>
+              <button
+                className="conversation-card__select"
+                onClick={() => onSelect(conversation.id)}
+                aria-current={selected ? "true" : undefined}
+              >
+                <div className="conversation-card__top">
+                  <strong>{conversation.title}</strong>
+                  <span>{formatDate(conversation.updated_at)}</span>
+                </div>
+                <p>{conversation.preview || "No messages yet."}</p>
+              </button>
               <div className="conversation-card__actions">
                 <button
                   className="inline-button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onRename(conversation.id);
-                  }}
+                  onClick={() => onRename(conversation.id)}
                 >
                   Rename
                 </button>
                 <button
                   className="inline-button inline-button--danger"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onDelete(conversation.id);
-                  }}
+                  onClick={() => onDelete(conversation.id)}
                 >
                   Delete
                 </button>

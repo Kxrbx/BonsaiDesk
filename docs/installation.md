@@ -27,7 +27,7 @@ Complete guide for installing and setting up Bonsai Desk on Windows.
 
 #### Software
 
-- **Python** 3.8 or higher (3.10-3.12 recommended)
+- **Python** 3.8 or higher
 - **Node.js** 18 LTS or higher
 - **PowerShell** 5.1 or higher (included in Windows)
 - **Git** 2.30 or higher
@@ -76,8 +76,11 @@ git clone https://github.com/Kxrbx/BonsaiDesk.git
 # Navigate to project folder
 cd BonsaiDesk
 
-# Run bootstrap script
-.\scripts\bootstrap.ps1
+# Easiest option
+.\install.bat
+
+# Manual fallback
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 ```
 
 The bootstrap script will:
@@ -109,13 +112,13 @@ Desktop installers will be available in future releases.
 Start the application:
 
 ```powershell
-.\scripts\run-dev.ps1
+.\launch-app.bat
 ```
 
-Or use the launcher:
+Or start the dev scripts directly:
 
 ```powershell
-.\launch-app.bat
+powershell -ExecutionPolicy Bypass -File .\scripts\run-dev.ps1
 ```
 
 ### Setup Wizard
@@ -170,7 +173,7 @@ npm list react
 If something doesn't work:
 
 ```powershell
-# Backend logs are in terminal where run-dev.ps1 is running
+# Backend logs are in the "Bonsai Desk Backend" terminal opened by launch-app.bat
 # Runtime logs are visible in the UI (Runtime Panel)
 # App data is in:
 ls $env:USERPROFILE\.bonsai-desk\

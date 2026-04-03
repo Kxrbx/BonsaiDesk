@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-03
+
 ### Added
+- Added `install.bat` for one-click dependency installation on Windows
 - Comprehensive documentation suite (installation, configuration, usage, troubleshooting)
 - Architecture documentation and API reference
 - Expanded contributing guidelines with code style standards
@@ -15,8 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Code of Conduct for community interactions
 
 ### Changed
-- Restructured README.md with table of contents and prerequisites section
+- Rewrote README.md with a beginner-friendly Windows setup flow
+- Updated installation, usage, and development docs to prefer `install.bat` and `launch-app.bat`
+- Aligned Vite with Storybook's peer dependency range to fix `npm ERESOLVE`
 - Improved navigation with detailed documentation index
+
+### Fixed
+- Fixed `install.bat` exiting early during prerequisite checks
+- Fixed bootstrap reporting success when Python/npm commands failed
+- Restored missing backend schema and chat streaming code that caused startup errors
 
 ## [0.1.0] - 2026-04-02
 
@@ -45,5 +55,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Environment-based configuration
 - Backward compatibility with legacy `.prism-launcher/` directory
 
-[Unreleased]: https://github.com/Kxrbx/BonsaiDesk/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/Kxrbx/BonsaiDesk/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Kxrbx/BonsaiDesk/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Kxrbx/BonsaiDesk/releases/tag/v0.1.0

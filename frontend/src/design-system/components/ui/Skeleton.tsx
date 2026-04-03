@@ -16,7 +16,7 @@ export function Skeleton({
   return (
     <span
       role="status"
-      aria-label="Loading..."
+      aria-label="Loading…"
       style={{
         display: "block",
         width,

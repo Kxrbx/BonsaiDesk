@@ -47,7 +47,7 @@ app = FastAPI(
     title=settings.app_name,
     lifespan=lifespan,
     description="Local-first chat API for running Bonsai models with Prism runtime",
-    version="0.1.0",
+    version="0.2.0",
     docs_url=None,  # Disable default docs, use custom endpoint
     redoc_url=None,  # Disable default redoc
 )
@@ -110,7 +110,7 @@ async def get_openapi_endpoint():
     """
     return get_openapi(
         title=settings.app_name,
-        version="0.1.0",
+        version="0.2.0",
         description="Local-first chat API for running Bonsai models with Prism runtime",
         routes=app.routes,
     )

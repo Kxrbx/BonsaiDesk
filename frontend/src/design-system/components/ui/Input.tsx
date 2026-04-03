@@ -57,14 +57,17 @@ export function Input({
   error,
   disabled,
   style,
+  id,
   ...props
 }: InputProps) {
   const isDisabled = disabled || inputState === "disabled";
+  const inputId = id ?? (label ? `input-${label.toLowerCase().replace(/\s+/g, "-")}` : undefined);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
       {label && (
         <label
+          htmlFor={inputId}
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: "0.875rem",
@@ -89,6 +92,7 @@ export function Input({
           </span>
         )}
         <input
+          id={inputId}
           disabled={isDisabled}
           style={{
             width: "100%",
@@ -97,7 +101,7 @@ export function Input({
             borderRadius: "var(--radius-lg)",
             color: "var(--color-text-primary)",
             outline: "none",
-            transition: "all var(--duration-normal) var(--ease-default)",
+            transition: "border-color var(--duration-normal) var(--ease-default), box-shadow var(--duration-normal) var(--ease-default), background-color var(--duration-normal) var(--ease-default)",
             ...sizeStyles[size],
             ...stateStyles[inputState],
             ...(leftElement && { paddingLeft: "40px" }),

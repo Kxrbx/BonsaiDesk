@@ -257,4 +257,83 @@ class RuntimeOverview(BaseModel):
     sources: list[AssetSourceInfo] = Field(default_factory=list)
 
 
-class FileSelection
+class Message(BaseModel):
+    """A single chat message stored in a conversation."""
+
+    id: str
+    conversation_id: str
+    role: Literal["user", "assistant", "system"]
+    content: str
+    created_at: datetime
+
+
+class ConversationSummary(BaseModel):
+    """Conversation metadata used in the sidebar list."""
+
+    id: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    preview: str = ""
+
+
+class Conversation(BaseModel):
+    """Conversation with full message history."""
+
+    id: str
+    title: str
+    created_at: datetime
+    updated_at: datetime
+    messages: list[Message] = Field(default_factory=list)
+
+
+class CreateConversationRequest(BaseModel):
+    """Payload for creating a conversation."""
+
+    title: str | None = None
+
+
+class UpdateConversationRequest(BaseModel):
+    """Payload for renaming a conversation."""
+
+    title: str
+
+
+class UseExistingAssetsRequest(BaseModel):
+    """Payload for linking existing runtime and model files."""
+
+    runtime_binary_path: str
+    model_file_path: str
+
+
+class ChatGenerationRequest(BaseModel):
+    """Payload for starting a streamed chat completion."""
+
+    content: str
+    conversation_id: str | None = None
+    override_system_prompt: str | None = None
+    override_temperature: float | None = None
+    override_top_k: int | None = None
+    override_top_p: float | None = None
+    override_min_p: float | None = None
+    override_max_tokens: int | None = None
+
+
+class ChatStreamEvent(BaseModel):
+    """Server-sent event payload emitted by the chat stream endpoint."""
+
+    type: Literal["meta", "delta", "done", "error"]
+    conversation_id: str
+    message_id: str | None = None
+    delta: str | None = None
+    error: str | None = None
+
+
+class FileSelectionResult(BaseModel):
+    """Result returned by the native file picker endpoints.
+
+    Attributes:
+        path: Selected file path, or None if the dialog was cancelled.
+    """
+
+    path: str | None = None

@@ -181,7 +181,7 @@ export function SetupScreen({
                 disabled={isInstalling || isBusy || !understandsOfficialDownload}
                 onClick={onInstall}
               >
-                {isInstalling ? "Installing in background..." : "Download official assets"}
+                {isInstalling ? "Installing in background…" : "Download official assets"}
               </button>
               <button
                 className="ghost-button"
@@ -192,7 +192,7 @@ export function SetupScreen({
               </button>
             </div>
 
-            <div className="setup-progress">
+            <div className="setup-progress" aria-live="polite" aria-atomic="true">
               <div className="setup-progress__header">
                 <div>
                   <h2>Download progress</h2>
@@ -268,14 +268,16 @@ export function SetupScreen({
                 <label className="config-field">
                   <span>Path to llama-server.exe</span>
                   <input
+                    name="runtime_binary_path"
                     value={runtimePathDraft}
                     onChange={(event) => setRuntimePathDraft(event.target.value)}
                     placeholder="C:\\path\\to\\llama-server.exe"
+                    autoComplete="off"
                   />
                 </label>
                 <div className="setup-actions">
                   <button className="ghost-button" disabled={isBusy || browseBusy !== null} onClick={() => void handleBrowseRuntime()}>
-                    {browseBusy === "runtime" ? "Opening picker..." : "Browse..."}
+                    {browseBusy === "runtime" ? "Opening picker…" : "Browse…"}
                   </button>
                   <button
                     className="primary-button"
@@ -305,14 +307,16 @@ export function SetupScreen({
                 <label className="config-field">
                   <span>Path to .gguf model</span>
                   <input
+                    name="model_file_path"
                     value={modelPathDraft}
                     onChange={(event) => setModelPathDraft(event.target.value)}
                     placeholder="D:\\Models\\Bonsai-8B.gguf"
+                    autoComplete="off"
                   />
                 </label>
                 <div className="setup-actions">
                   <button className="ghost-button" disabled={isBusy || browseBusy !== null} onClick={() => void handleBrowseModel()}>
-                    {browseBusy === "model" ? "Opening picker..." : "Browse..."}
+                    {browseBusy === "model" ? "Opening picker…" : "Browse…"}
                   </button>
                   <button
                     className="primary-button"
@@ -337,9 +341,9 @@ export function SetupScreen({
           </article>
         </div>
 
-        {error ? <div className="notice notice--error">{error}</div> : null}
-        {installProgress?.error ? <div className="notice notice--error">{installProgress.error}</div> : null}
-        {runtimeStatus?.install_message ? <div className="notice">{runtimeStatus.install_message}</div> : null}
+        {error ? <div className="notice notice--error" role="alert">{error}</div> : null}
+        {installProgress?.error ? <div className="notice notice--error" role="alert">{installProgress.error}</div> : null}
+        {runtimeStatus?.install_message ? <div className="notice" role="status">{runtimeStatus.install_message}</div> : null}
       </section>
 
       <section className="setup-grid setup-grid--wide">

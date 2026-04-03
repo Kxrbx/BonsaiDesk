@@ -1,10 +1,8 @@
-import type { CSSProperties, ReactNode } from "react";
-
-type HTMLTag = keyof JSX.IntrinsicElements;
+import type { CSSProperties, ReactNode, ElementType } from "react";
 type Spacing = 0 | 0.5 | 1 | 1.5 | 2 | 2.5 | 3 | 3.5 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 12 | 14 | 16 | 20 | 24;
 
 interface BoxProps {
-  as?: HTMLTag;
+  as?: ElementType;
   children?: ReactNode;
   className?: string;
   padding?: Spacing;
@@ -122,7 +120,7 @@ export function Box({
   };
 
   return (
-    <Component className={className} style={styles} onClick={onClick} {...props}>
+    <Component className={className} style={styles} onClick={onClick} {...props} ref={undefined}>
       {children}
     </Component>
   );
