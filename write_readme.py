@@ -1,4 +1,6 @@
-# Bonsai Desk
+import os
+
+readme_content = """# Bonsai Desk
 
 [![CI](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml/badge.svg)](https://github.com/Kxrbx/BonsaiDesk/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-a7f3c8.svg)](./LICENSE)
@@ -136,7 +138,7 @@ cd BonsaiDesk
 Run the bootstrap script to install all required packages:
 
 ```powershell
-.\scriptsootstrap.ps1
+.\scripts\bootstrap.ps1
 ```
 
 **What just happened?**
@@ -165,7 +167,7 @@ There are two ways to start Bonsai Desk:
 
 **Option B: Manual Start**
 ```powershell
-.\scriptsun-dev.ps1
+.\scripts\run-dev.ps1
 ```
 
 **What just happened?**
@@ -391,10 +393,10 @@ BonsaiDesk/
 .\scripts\check.ps1
 
 # Start backend only
-.\scriptsun-backend.ps1
+.\scripts\run-backend.ps1
 
 # Start frontend only
-.\scriptsun-frontend.ps1
+.\scripts\run-frontend.ps1
 ```
 
 See CONTRIBUTING.md for guidelines.
@@ -427,3 +429,8 @@ Bonsai Desk downloads assets directly from upstream sources:
 ## License
 
 MIT License - see LICENSE for details.
+"""
+
+with open('README.md', 'w', encoding='utf-8') as f:
+    f.write(readme_content)
+print('README.md written successfully')
