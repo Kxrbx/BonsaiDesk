@@ -21,6 +21,7 @@ import type {
   Message,
   ModelDescriptor,
   RuntimeConfig,
+  RuntimeDiagnostics,
   RuntimeStatus
 } from "./types";
 
@@ -35,6 +36,7 @@ export default function App() {
   const [installProgress, setInstallProgress] = useState<InstallProgress | null>(null);
   const [assetSources, setAssetSources] = useState<AssetSourceInfo[]>([]);
   const [models, setModels] = useState<ModelDescriptor[]>([]);
+  const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnostics | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState("");
@@ -46,6 +48,7 @@ export default function App() {
   const [isInstalling, setIsInstalling] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [showRuntimePanel, setShowRuntimePanel] = useState(initialUiPrefs.showRuntimePanel);
+  const [showMobileSidebar, setShowMobileSidebar] = useState(false);
   const [runtimePanelTab, setRuntimePanelTab] = useState<RuntimePanelTab>(initialUiPrefs.runtimeTab);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -71,6 +74,8 @@ export default function App() {
     setModels(overview.models);
     setInstallProgress(overview.install_progress);
     setAssetSources(overview.sources);
+    setRuntimeDiagnostics(overview.diagnostics);
+    setLogs(overview.diagnostics.recent_logs);
     setIsInstalling(overview.install_progress.state === "running");
   }
 
@@ -99,7 +104,6 @@ export default function App() {
     try {
       setError(null);
       await Promise.all([refreshRuntime(), refreshConversations()]);
-      setLogs(await api.getRuntimeLogs());
     } catch (caughtError) {
       setError((caughtError as Error).message);
     } finally {
@@ -139,6 +143,8 @@ export default function App() {
           setRuntimeConfig(overview.config);
           setModels(overview.models);
           setAssetSources(overview.sources);
+          setRuntimeDiagnostics(overview.diagnostics);
+          setLogs(overview.diagnostics.recent_logs);
 
           if (overview.install_progress.state === "completed" || overview.install_progress.state === "error") {
             setIsInstalling(false);
@@ -167,6 +173,7 @@ export default function App() {
     try {
       setError(null);
       setSelectedConversation(await api.getConversation(conversationId));
+      setShowMobileSidebar(false);
     } catch (caughtError) {
       if (isMissingConversationError(caughtError)) {
         setSelectedConversation(null);
@@ -255,6 +262,8 @@ export default function App() {
       setModels(overview.models);
       setInstallProgress(overview.install_progress);
       setAssetSources(overview.sources);
+      setRuntimeDiagnostics(overview.diagnostics);
+      setLogs(overview.diagnostics.recent_logs);
     } catch (caughtError) {
       setError((caughtError as Error).message);
     } finally {
@@ -270,6 +279,41 @@ export default function App() {
       setLogs(await api.getRuntimeLogs());
     } catch (caughtError) {
       setError((caughtError as Error).message);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleSelectModelVariant(variant: string) {
+    try {
+      setError(null);
+      setIsBusy(true);
+      const overview = await api.selectModelVariant(variant);
+      setRuntimeStatus(overview.status);
+      setRuntimeConfig(overview.config);
+      setModels(overview.models);
+      setInstallProgress(overview.install_progress);
+      setAssetSources(overview.sources);
+      setRuntimeDiagnostics(overview.diagnostics);
+      setLogs(overview.diagnostics.recent_logs);
+    } catch (caughtError) {
+      setError((caughtError as Error).message);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleInstallModelVariant(variant: string) {
+    try {
+      setError(null);
+      setIsBusy(true);
+      const progress = await api.installModelVariant(variant);
+      setInstallProgress(progress);
+      setIsInstalling(progress.state === "running");
+      await refreshRuntime();
+    } catch (caughtError) {
+      setError((caughtError as Error).message);
+      setIsInstalling(false);
     } finally {
       setIsBusy(false);
     }
@@ -424,11 +468,14 @@ export default function App() {
         installProgress={installProgress}
         models={models}
         sources={assetSources}
+        diagnostics={runtimeDiagnostics}
         isInstalling={isInstalling}
         isBusy={isBusy}
         error={error}
         onInstall={() => void handleInstall()}
         onStart={() => void handleStart()}
+        onSelectModelVariant={(variant) => void handleSelectModelVariant(variant)}
+        onInstallModelVariant={(variant) => void handleInstallModelVariant(variant)}
         onBrowseRuntimeBinary={handleBrowseRuntimeBinary}
         onBrowseModelFile={handleBrowseModelFile}
         onUseExistingAssets={(payload) => void handleUseExistingAssets(payload)}
@@ -441,9 +488,19 @@ export default function App() {
       <div className="shell__glow shell__glow--amber" />
       <div className="shell__glow shell__glow--mint" />
 
+      {showMobileSidebar ? (
+        <button
+          className="sidebar-mobile-backdrop"
+          aria-label="Close conversations sidebar"
+          onClick={() => setShowMobileSidebar(false)}
+        />
+      ) : null}
+
       <Sidebar
         conversations={conversations}
         selectedConversationId={selectedConversation?.id ?? null}
+        mobileOpen={showMobileSidebar}
+        onCloseMobile={() => setShowMobileSidebar(false)}
         onSelect={(conversationId) => void handleSelectConversation(conversationId)}
         onCreate={() => void handleCreateConversation()}
         onRename={(conversationId) => void handleRenameConversation(conversationId)}
@@ -460,6 +517,9 @@ export default function App() {
               <h2>{selectedConversation?.title ?? "New conversation"}</h2>
             </div>
             <div className="status-pills">
+              <button className="ghost-button chat-layout__mobile-sidebar" onClick={() => setShowMobileSidebar(true)}>
+                Conversations
+              </button>
               <span className={`pill ${runtimeStatus?.ready ? "pill--ready" : ""}`}>
                 {runtimeStatus?.health_url ?? "No endpoint"}
               </span>
@@ -493,6 +553,8 @@ export default function App() {
           activeTab={runtimePanelTab}
           runtimeStatus={runtimeStatus}
           runtimeConfig={runtimeConfig}
+          diagnostics={runtimeDiagnostics}
+          models={models}
           activePreset={activePreset}
           hasUnsavedChanges={hasUnsavedRuntimeChanges}
           logs={logs}
@@ -501,6 +563,7 @@ export default function App() {
           onTabChange={setRuntimePanelTab}
           onChange={setRuntimeConfig}
           onApplyPreset={handleApplyPreset}
+          onSelectModelVariant={(variant) => void handleSelectModelVariant(variant)}
           onSave={() => void handleSaveConfig()}
           onStart={() => void handleStart()}
           onStop={() => void handleStop()}

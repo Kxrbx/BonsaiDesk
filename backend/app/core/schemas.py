@@ -42,6 +42,7 @@ class RuntimeConfig(BaseModel):
     host: str = "127.0.0.1"
     port: int = 8080
     model_filename: str = "Bonsai-8B.gguf"
+    model_variant: str = "8B"
     runtime_binary_path: str | None = None
     model_file_path: str | None = None
     system_prompt: str = "You are a helpful assistant."
@@ -92,7 +93,7 @@ class RuntimeConfig(BaseModel):
         text = str(value).strip()
         return text or None
 
-    @field_validator("model_filename", "system_prompt", "reasoning_format", mode="before")
+    @field_validator("model_filename", "model_variant", "system_prompt", "reasoning_format", mode="before")
     @classmethod
     def normalize_required_text_fields(cls, value: object) -> str:
         """Normalize required text fields.
@@ -211,8 +212,19 @@ class ModelDescriptor(BaseModel):
     name: str
     filename: str
     size_hint: str
+    variant: str = "8B"
+    download_url: str = ""
+    requirements_hint: str = ""
+    is_active: bool = False
+    is_downloaded: bool = False
     local_path: str | None = None
     installed: bool
+
+
+class SelectModelRequest(BaseModel):
+    """Payload for selecting a Bonsai model variant."""
+
+    variant: str
 
 
 class AssetSourceInfo(BaseModel):
@@ -237,6 +249,28 @@ class AssetSourceInfo(BaseModel):
     summary: str
 
 
+class RuntimeDiagnosticCheck(BaseModel):
+    """Single runtime diagnostic check displayed in the setup/runtime UI."""
+
+    id: str
+    label: str
+    status: Literal["ok", "warning", "error"]
+    detail: str
+    action_hint: str | None = None
+
+
+class RuntimeDiagnostics(BaseModel):
+    """Aggregated runtime diagnostics exposed by the backend."""
+
+    generated_at: datetime
+    platform_label: str
+    gpu_label: str
+    cuda_label: str
+    runtime_version: str
+    checks: list[RuntimeDiagnosticCheck] = Field(default_factory=list)
+    recent_logs: list[str] = Field(default_factory=list)
+
+
 class RuntimeOverview(BaseModel):
     """Complete runtime overview for the UI.
     
@@ -248,6 +282,7 @@ class RuntimeOverview(BaseModel):
         models: List of available models.
         install_progress: Installation progress information.
         sources: List of upstream asset sources.
+        diagnostics: Structured runtime diagnostics.
     """
     
     status: RuntimeStatus
@@ -255,6 +290,7 @@ class RuntimeOverview(BaseModel):
     models: list[ModelDescriptor] = Field(default_factory=list)
     install_progress: InstallProgress
     sources: list[AssetSourceInfo] = Field(default_factory=list)
+    diagnostics: RuntimeDiagnostics
 
 
 class Message(BaseModel):
@@ -302,8 +338,8 @@ class UpdateConversationRequest(BaseModel):
 class UseExistingAssetsRequest(BaseModel):
     """Payload for linking existing runtime and model files."""
 
-    runtime_binary_path: str
-    model_file_path: str
+    runtime_binary_path: str | None = None
+    model_file_path: str | None = None
 
 
 class ChatGenerationRequest(BaseModel):

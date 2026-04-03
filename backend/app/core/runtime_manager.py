@@ -24,6 +24,7 @@ if os.name == "nt":
     from ctypes import wintypes
 
 from app.core.config import settings
+from app.core.model_catalog import BONSAI_MODEL_VARIANTS, detect_model_variant_from_filename, get_model_variant
 from app.core.schemas import (
     AssetSourceInfo,
     FileSelectionResult,
@@ -31,7 +32,8 @@ from app.core.schemas import (
     InstallStageProgress,
     ModelDescriptor,
     RuntimeConfig,
-    RuntimeOverview,
+    RuntimeDiagnosticCheck,
+    RuntimeDiagnostics,
     RuntimeStatus,
     UseExistingAssetsRequest,
 )
@@ -221,16 +223,62 @@ class RuntimeManager:
         settings.logs_dir.mkdir(parents=True, exist_ok=True)
 
     def get_model_descriptor(self) -> ModelDescriptor:
+        descriptors = self.get_model_descriptors()
+        return next((descriptor for descriptor in descriptors if descriptor.is_active), descriptors[0])
+
+    def get_model_descriptors(self) -> list[ModelDescriptor]:
         config = self.get_runtime_config()
-        model_path = self._find_local_model(config)
-        return ModelDescriptor(
-            id=settings.model_repo_id,
-            name=Path(config.model_filename).stem.replace("-", " "),
-            filename=config.model_filename,
-            size_hint="1.16 GB",
-            local_path=str(model_path) if model_path else None,
-            installed=bool(model_path),
-        )
+        active_variant = self._active_model_variant(config)
+        descriptors: list[ModelDescriptor] = []
+        for variant in BONSAI_MODEL_VARIANTS:
+            candidate_path = self._find_variant_model_file(variant.id)
+            is_active = variant.id == active_variant
+            if is_active:
+                candidate_path = self._find_local_model(config) or candidate_path
+            descriptors.append(
+                ModelDescriptor(
+                    id=variant.repo_id,
+                    name=variant.label,
+                    filename=variant.filename,
+                    size_hint=variant.size_hint,
+                    variant=variant.id,
+                    download_url=variant.download_url,
+                    requirements_hint=variant.requirements_hint,
+                    is_active=is_active,
+                    is_downloaded=bool(candidate_path),
+                    local_path=str(candidate_path) if candidate_path else None,
+                    installed=bool(candidate_path),
+                )
+            )
+
+        if active_variant == "custom":
+            custom_path = self._config_model_path(config)
+            custom_label_source = config.model_file_path or config.model_filename or "Custom GGUF"
+            descriptors.insert(
+                0,
+                ModelDescriptor(
+                    id="local-custom-model",
+                    name=Path(custom_label_source).stem,
+                    filename=config.model_filename,
+                    size_hint="Local file",
+                    variant="custom",
+                    download_url="",
+                    requirements_hint="User-linked local GGUF model.",
+                    is_active=True,
+                    is_downloaded=bool(custom_path),
+                    local_path=str(custom_path) if custom_path else config.model_file_path,
+                    installed=bool(custom_path),
+                ),
+            )
+        return descriptors
+
+    def select_model_variant(self, variant_id: str) -> RuntimeConfig:
+        variant = get_model_variant(variant_id)
+        config = self.get_runtime_config()
+        config.model_variant = variant.id
+        config.model_filename = variant.filename
+        config.model_file_path = None
+        return self.update_runtime_config(config)
 
     def get_asset_sources(self) -> list[AssetSourceInfo]:
         return [
@@ -260,12 +308,128 @@ class RuntimeManager:
             ),
         ]
 
+    def _probe_gpu_info(self) -> tuple[str, str]:
+        candidates = [
+            shutil.which("nvidia-smi"),
+            str(Path(os.environ.get("ProgramFiles", "")) / "NVIDIA Corporation" / "NVSMI" / "nvidia-smi.exe"),
+            str(Path(os.environ.get("SystemRoot", "C:\\Windows")) / "System32" / "nvidia-smi.exe"),
+        ]
+        for candidate in candidates:
+            if not candidate:
+                continue
+            path = Path(candidate)
+            if not path.exists():
+                continue
+            try:
+                result = subprocess.run(
+                    [
+                        str(path),
+                        "--query-gpu=name,driver_version",
+                        "--format=csv,noheader",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                    timeout=5,
+                )
+            except (OSError, subprocess.TimeoutExpired):
+                continue
+            output = (result.stdout or "").strip().splitlines()
+            if output:
+                gpu_name = output[0].split(",")[0].strip() or "NVIDIA GPU detected"
+                match = re.search(r"CUDA Version:\s+(\d+\.\d+)", result.stderr + result.stdout)
+                return gpu_name, f"CUDA {match.group(1)}" if match else f"CUDA package {self._detect_cuda_tag()}"
+        return "No NVIDIA GPU detected", "CPU / unknown CUDA"
+
+    def _read_runtime_version(self, binary_path: Path | None) -> str:
+        if not binary_path:
+            return "Runtime binary not detected"
+        try:
+            result = subprocess.run(
+                [str(binary_path), "--version"],
+                capture_output=True,
+                text=True,
+                check=False,
+                timeout=5,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            return f"{binary_path.name} (version unavailable)"
+        text = " ".join((result.stdout + "\n" + result.stderr).strip().split())
+        return text[:180] if text else f"{binary_path.name} detected"
+
+    async def get_diagnostics(self) -> RuntimeDiagnostics:
+        config = self.get_runtime_config()
+        status = await self.get_status()
+        binary_path = self._find_local_binary(config)
+        model_path = self._find_local_model(config)
+        gpu_label, cuda_label = self._probe_gpu_info()
+        port_busy = self._is_port_open(config.host, config.port)
+
+        checks = [
+            RuntimeDiagnosticCheck(
+                id="runtime-binary",
+                label="Runtime binary",
+                status="ok" if binary_path else "error",
+                detail=str(binary_path) if binary_path else "No llama-server binary is currently resolved.",
+                action_hint=None if binary_path else "Link a local runtime binary or run the official install flow.",
+            ),
+            RuntimeDiagnosticCheck(
+                id="model-file",
+                label="Model file",
+                status="ok" if model_path else "error",
+                detail=str(model_path) if model_path else "No GGUF model is currently resolved.",
+                action_hint=None if model_path else "Download a Bonsai variant or link an existing GGUF file.",
+            ),
+            RuntimeDiagnosticCheck(
+                id="port-state",
+                label="Runtime port",
+                status="ok" if (status.ready or not port_busy) else "warning",
+                detail=(
+                    f"{config.host}:{config.port} is reachable by Bonsai Desk."
+                    if status.ready
+                    else f"{config.host}:{config.port} is already in use."
+                    if port_busy
+                    else f"{config.host}:{config.port} is free."
+                ),
+                action_hint=None if (status.ready or not port_busy) else "Stop the conflicting process or change PRISM_RUNTIME_PORT.",
+            ),
+            RuntimeDiagnosticCheck(
+                id="health",
+                label="Server health",
+                status="ok" if status.ready else "warning" if status.running else "error",
+                detail=(
+                    "llama-server is healthy."
+                    if status.ready
+                    else "llama-server is running but not healthy yet."
+                    if status.running
+                    else "llama-server is stopped."
+                ),
+                action_hint=None if status.ready else "Open logs, fix model/runtime paths, then start or restart the runtime.",
+            ),
+        ]
+
+        return RuntimeDiagnostics(
+            generated_at=self._now(),
+            platform_label=f"{platform.system()} {platform.release()}",
+            gpu_label=gpu_label,
+            cuda_label=cuda_label,
+            runtime_version=self._read_runtime_version(binary_path),
+            checks=checks,
+            recent_logs=self.tail_logs(120),
+        )
+
     def get_runtime_config(self) -> RuntimeConfig:
         config = self.storage.get_runtime_config()
         config.host = settings.runtime_host
         config.port = settings.runtime_port
         if not config.model_filename:
             config.model_filename = settings.model_filename
+        if not config.model_variant:
+            config.model_variant = detect_model_variant_from_filename(config.model_filename)
+        if config.model_variant != "custom" and not config.model_file_path:
+            variant = get_model_variant(config.model_variant)
+            config.model_variant = variant.id
+            config.model_filename = variant.filename
         return config
 
     def update_runtime_config(self, config: RuntimeConfig) -> RuntimeConfig:
@@ -273,6 +437,15 @@ class RuntimeManager:
         config.port = settings.runtime_port
         if config.model_file_path:
             config.model_filename = Path(config.model_file_path).name
+            config.model_variant = detect_model_variant_from_filename(config.model_filename)
+        else:
+            detected_variant = detect_model_variant_from_filename(config.model_filename)
+            if detected_variant == "custom":
+                config.model_variant = "custom"
+                return self.storage.save_runtime_config(config)
+            variant = get_model_variant(config.model_variant)
+            config.model_variant = variant.id
+            config.model_filename = variant.filename
         return self.storage.save_runtime_config(config)
 
     def _binary_override_path(self) -> Path | None:
@@ -391,18 +564,34 @@ class RuntimeManager:
         runtime_config = config or self.get_runtime_config()
         return settings.models_dir / runtime_config.model_filename
 
+    def _active_model_variant(self, config: RuntimeConfig | None = None) -> str:
+        runtime_config = config or self.get_runtime_config()
+        if runtime_config.model_file_path:
+            return detect_model_variant_from_filename(runtime_config.model_filename)
+        if runtime_config.model_variant == "custom":
+            return "custom"
+        return get_model_variant(runtime_config.model_variant).id
+
+    def _find_variant_model_file(self, variant_id: str) -> Path | None:
+        variant = get_model_variant(variant_id)
+        direct_candidates = [
+            settings.models_dir / variant.filename,
+            settings.models_dir / "gguf" / variant.id / variant.filename,
+        ]
+        for candidate in direct_candidates:
+            if candidate.exists():
+                return candidate.resolve()
+        return None
+
     def _find_local_model(self, config: RuntimeConfig | None = None) -> Path | None:
         runtime_config = config or self.get_runtime_config()
         configured = self._config_model_path(runtime_config)
         if configured:
             return configured
-        direct_candidates = [
-            self._model_path(runtime_config),
-            settings.models_dir / "gguf" / settings.bonsai_model_size / runtime_config.model_filename,
-        ]
-        for candidate in direct_candidates:
-            if candidate.exists():
-                return candidate.resolve()
+        if runtime_config.model_variant != "custom":
+            return self._find_variant_model_file(runtime_config.model_variant)
+        if self._model_path(runtime_config).exists():
+            return self._model_path(runtime_config).resolve()
         return None
 
     def _binary_source(self, config: RuntimeConfig | None = None) -> str | None:
@@ -448,6 +637,12 @@ class RuntimeManager:
     def _process_alive(self, pid: int | None) -> bool:
         if not pid:
             return False
+        if os.name != "nt":
+            try:
+                os.kill(pid, 0)
+                return True
+            except OSError:
+                return False
         process = subprocess.run(
             ["tasklist", "/FI", f"PID eq {pid}"],
             capture_output=True,
@@ -467,12 +662,18 @@ class RuntimeManager:
     def _shutdown_on_exit(self) -> None:
         pid = self._pid()
         if pid and self._process_alive(pid):
-            subprocess.run(
-                ["taskkill", "/PID", str(pid), "/T", "/F"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(pid), "/T", "/F"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            else:
+                try:
+                    os.kill(pid, 15)
+                except OSError:
+                    pass
         if settings.runtime_pid_path.exists():
             settings.runtime_pid_path.unlink(missing_ok=True)
         self._close_runtime_log_handle()
@@ -837,19 +1038,23 @@ class RuntimeManager:
                     stage_detail=f"Using cached {model_path.name}",
                 )
             else:
-                target_model_path = self._model_path()
+                config = self.get_runtime_config()
+                if config.model_variant == "custom":
+                    config = self.select_model_variant("8B")
+                variant = get_model_variant(config.model_variant)
+                target_model_path = settings.models_dir / variant.filename
                 self._update_install_progress(
                     current_step="Downloading Bonsai model",
                     stage_id="model_download",
                     stage_status="running",
                     stage_progress=2.0,
-                    stage_detail="Preparing model download",
+                    stage_detail=f"Preparing download for {variant.label}",
                 )
                 self._download_file(
-                    settings.model_download_url,
+                    variant.download_url,
                     target_model_path,
                     stage_id="model_download",
-                    label="Downloading Bonsai model",
+                    label=f"Downloading {variant.label}",
                 )
                 self._update_install_progress(
                     stage_id="model_download",
@@ -989,7 +1194,7 @@ class RuntimeManager:
             cwd=str(Path(command[0]).parent),
             stdout=self._runtime_log_handle,
             stderr=subprocess.STDOUT,
-            creationflags=subprocess.CREATE_NO_WINDOW,
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
         )
         self._bind_process_to_backend_lifecycle(process)
         settings.runtime_pid_path.write_text(str(process.pid), encoding="utf-8")
@@ -1009,12 +1214,18 @@ class RuntimeManager:
     async def stop(self) -> RuntimeStatus:
         pid = self._pid()
         if pid and self._process_alive(pid):
-            subprocess.run(
-                ["taskkill", "/PID", str(pid), "/T", "/F"],
-                capture_output=True,
-                text=True,
-                check=False,
-            )
+            if os.name == "nt":
+                subprocess.run(
+                    ["taskkill", "/PID", str(pid), "/T", "/F"],
+                    capture_output=True,
+                    text=True,
+                    check=False,
+                )
+            else:
+                try:
+                    os.kill(pid, 15)
+                except OSError:
+                    pass
         if settings.runtime_pid_path.exists():
             settings.runtime_pid_path.unlink()
         self._close_runtime_log_handle()

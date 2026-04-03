@@ -3,6 +3,8 @@ import type { ConversationSummary } from "../types";
 interface SidebarProps {
   conversations: ConversationSummary[];
   selectedConversationId: string | null;
+  mobileOpen: boolean;
+  onCloseMobile: () => void;
   onSelect: (conversationId: string) => void;
   onCreate: () => void;
   onRename: (conversationId: string) => void;
@@ -21,18 +23,23 @@ function formatDate(value: string): string {
 export function Sidebar({
   conversations,
   selectedConversationId,
+  mobileOpen,
+  onCloseMobile,
   onSelect,
   onCreate,
   onRename,
   onDelete
 }: SidebarProps) {
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${mobileOpen ? "sidebar--mobile-open" : ""}`}>
       <div className="sidebar__brand">
         <div>
           <p className="eyebrow">Local Bonsai workspace</p>
           <h1>Bonsai Desk</h1>
         </div>
+        <button className="ghost-button sidebar__mobile-close" onClick={onCloseMobile}>
+          Close
+        </button>
       </div>
 
       <div className="sidebar__actions">

@@ -290,8 +290,18 @@ button:disabled {
 }
 
 .sidebar__brand {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
   padding: 20px 18px 12px;
   border-bottom: 1px solid var(--line);
+}
+
+.sidebar__mobile-close,
+.chat-layout__mobile-sidebar,
+.sidebar-mobile-backdrop {
+  display: none;
 }
 
 .sidebar__brand h1,
@@ -956,6 +966,10 @@ button:disabled {
   padding: 18px;
 }
 
+.runtime-card--span {
+  grid-column: 1 / -1;
+}
+
 .runtime-card > p {
   margin: 0;
   color: var(--muted-strong);
@@ -984,6 +998,119 @@ button:disabled {
 .runtime-stat:first-child {
   padding-top: 0;
   border-top: 0;
+}
+
+.runtime-model-grid,
+.runtime-diagnostics-grid,
+.setup-model-list {
+  display: grid;
+  gap: 12px;
+}
+
+.runtime-model-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.runtime-model-chip {
+  display: grid;
+  gap: 8px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+  color: var(--text);
+  text-align: left;
+}
+
+.runtime-model-chip--active {
+  border-color: rgba(183, 255, 206, 0.22);
+  background: rgba(183, 255, 206, 0.06);
+}
+
+.runtime-model-chip span,
+.runtime-model-chip em,
+.runtime-diagnostic-tile p,
+.runtime-diagnostic-tile small,
+.setup-diagnostic-row p,
+.setup-diagnostic-row small {
+  color: var(--muted);
+  font-style: normal;
+  line-height: 1.5;
+}
+
+.runtime-diagnostics-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.runtime-diagnostic-tile,
+.setup-diagnostic-row,
+.setup-model-row {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border-radius: 18px;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.runtime-diagnostic-tile__top,
+.setup-diagnostic-row__top,
+.setup-model-row,
+.setup-model-row__actions,
+.setup-diagnostics-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.runtime-diagnostic-tile--ok,
+.setup-diagnostic-row--ok {
+  border-color: rgba(183, 255, 206, 0.14);
+}
+
+.runtime-diagnostic-tile--warning,
+.setup-diagnostic-row--warning {
+  border-color: rgba(242, 197, 111, 0.18);
+}
+
+.runtime-diagnostic-tile--error,
+.setup-diagnostic-row--error {
+  border-color: rgba(255, 143, 125, 0.22);
+}
+
+.setup-model-row {
+  align-items: center;
+}
+
+.setup-model-row--active {
+  border-color: rgba(183, 255, 206, 0.24);
+  background:
+    radial-gradient(circle at top right, rgba(183, 255, 206, 0.05), transparent 40%),
+    rgba(255, 255, 255, 0.025);
+}
+
+.setup-model-row__copy {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.setup-model-row__copy span,
+.setup-diagnostics-meta span {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.setup-model-row__actions {
+  flex-shrink: 0;
+  align-items: center;
+}
+
+.setup-diagnostics-meta {
+  flex-wrap: wrap;
+  padding-bottom: 14px;
+  margin-bottom: 14px;
+  border-bottom: 1px solid var(--line);
 }
 
 .runtime-actions {
@@ -1580,24 +1707,52 @@ button:disabled {
 @media (max-width: 900px) {
   .shell {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(0, 1fr) minmax(220px, 34vh);
     padding: 12px;
     gap: 12px;
   }
 
-  .sidebar,
   .chat-layout {
     min-height: 0;
     height: 100%;
   }
 
   .chat-layout {
-    order: 1;
     padding: 18px;
   }
 
   .sidebar {
-    order: 2;
+    position: fixed;
+    z-index: 50;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    width: min(86vw, 340px);
+    transform: translateX(calc(-100% - 24px));
+    opacity: 0;
+    transition: transform 220ms ease, opacity 220ms ease;
+    pointer-events: none;
+  }
+
+  .sidebar--mobile-open {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar__mobile-close,
+  .chat-layout__mobile-sidebar {
+    display: inline-flex;
+  }
+
+  .sidebar-mobile-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 45;
+    border: 0;
+    padding: 0;
+    background: rgba(6, 8, 7, 0.72);
+    backdrop-filter: blur(10px);
   }
 
   .chat-layout__header-inner,
@@ -1658,6 +1813,8 @@ button:disabled {
   .runtime-tabs--modal,
   .empty-state__prompts,
   .runtime-summary-grid,
+  .runtime-model-grid,
+  .runtime-diagnostics-grid,
   .runtime-preset-grid,
   .runtime-detail-grid {
     width: 100%;
@@ -1697,7 +1854,10 @@ button:disabled {
   .composer__actions,
   .setup-flow-card__header,
   .setup-link-card__header,
-  .setup-transparency-card__header {
+  .setup-transparency-card__header,
+  .setup-model-row,
+  .setup-model-row__actions,
+  .setup-diagnostics-meta {
     align-items: stretch;
     flex-direction: column;
   }

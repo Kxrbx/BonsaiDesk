@@ -100,6 +100,9 @@ export const api = {
   /** Get complete runtime overview */
   getRuntimeOverview: () => request<RuntimeOverview>("/runtime/overview"),
 
+  /** Get structured runtime diagnostics */
+  getRuntimeDiagnostics: () => request<RuntimeOverview["diagnostics"]>("/runtime/diagnostics"),
+
   /** Get current runtime configuration */
   getRuntimeConfig: () => request<RuntimeConfig>("/runtime/config"),
 
@@ -143,6 +146,20 @@ export const api = {
 
   /** List available models */
   listModels: () => request<ModelDescriptor[]>("/models"),
+
+  /** Select a Bonsai model variant */
+  selectModelVariant: (variant: string) =>
+    request<RuntimeOverview>("/models/select", {
+      method: "POST",
+      body: JSON.stringify({ variant })
+    }),
+
+  /** Install a specific Bonsai model variant */
+  installModelVariant: (variant: string) =>
+    request<InstallProgress>("/models/install", {
+      method: "POST",
+      body: JSON.stringify({ variant })
+    }),
 
   /** List all conversations */
   listConversations: () => request<ConversationSummary[]>("/conversations"),

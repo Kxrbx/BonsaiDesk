@@ -28,7 +28,7 @@ Bonsai Desk turns the Bonsai + Prism local workflow into a guided desktop-style 
 | Platform | Windows first |
 | Users | Single local user |
 | Runtime | Prism-powered `llama-server` |
-| Models | Bonsai GGUF 8B, with 4B / 1.7B planned |
+| Models | Bonsai GGUF 8B / 4B / 1.7B |
 
 App data is stored in `.bonsai-desk/` by default. If an older `.prism-launcher/` folder exists, Bonsai Desk reuses it automatically.
 
@@ -339,12 +339,10 @@ Bonsai Desk downloads assets directly from upstream sources:
 
 ## Roadmap
 
-- Bonsai model-size switching, including 8B / 4B / 1.7B
-- Better runtime diagnostics
-- UI polish and responsive cleanup
-- More frontend test coverage
 - Desktop packaging
-- Multi-platform support
+- Broader multi-platform support beyond the current Windows-first workflow
+- More automated frontend coverage around UI interaction flows
+- Continued setup/runtime UX polish and benchmarking-oriented diagnostics
 
 ## License
 
