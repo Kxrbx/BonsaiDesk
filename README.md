@@ -6,245 +6,172 @@
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-3776ab.svg)]()
 [![Node: 18+](https://img.shields.io/badge/node-18+-339933.svg)]()
 
-Local-first chat app for running prism-ml/Bonsai-8B-gguf with a polished ChatGPT-like interface, a built-in Prism runtime manager, and persistent conversation history.
+Local-first chat app for running `prism-ml/Bonsai-8B-gguf` with a ChatGPT-like interface, built-in Prism runtime management, and saved conversation history.
 
 <img width="1690" height="956" alt="Bonsai Desk Interface" src="https://github.com/user-attachments/assets/2cb464c3-60d8-4724-8dbd-5ad79587eb72" />
 
----
-
-## Table of Contents
-
-- [What is Bonsai Desk?](#what-is-bonsai-desk)
-- [Step-by-Step Setup Tutorial](#step-by-step-setup-tutorial)
-  - [Before You Start: Install Prerequisites](#before-you-start-install-prerequisites)
-  - [Step 1: Download Bonsai Desk](#step-1-download-bonsai-desk)
-  - [Step 2: Install Dependencies](#step-2-install-dependencies)
-  - [Step 3: Launch the Application](#step-3-launch-the-application)
-  - [Step 4: First-Time Setup Wizard](#step-4-first-time-setup-wizard)
-  - [Step 5: Start Chatting!](#step-5-start-chatting)
-- [Features](#features)
-- [Documentation](#documentation)
-- [Configuration](#configuration)
-- [Troubleshooting](#troubleshooting)
-- [Development](#development)
-- [Roadmap](#roadmap)
-- [License](#license)
-
----
-
 ## What is Bonsai Desk?
 
-Bonsai Desk transforms the Bonsai + Prism local workflow into a polished product—no more folder of scripts.
+Bonsai Desk turns the Bonsai + Prism local workflow into a guided desktop-style web app. Instead of manually juggling model files and server scripts, you can install assets, start the runtime, and chat from one interface.
 
 **What you get:**
+- A modern local chat UI with conversation history
+- A setup wizard for the Prism runtime and Bonsai GGUF model
+- A runtime control panel for inference settings
+- Local storage for settings and chats
+- Support for official downloads or existing local files
 
-- Modern local chat UI with conversation history
-- Guided setup flow for Prism runtime and Bonsai GGUF model
-- Runtime control modal for tuning inference parameters
-- Local persistence for settings and conversations
-- Support for both official downloads and existing local files
-
-### Current Scope
+**Current scope:**
 
 | Aspect | Support |
 |--------|---------|
-| Platform | Windows (primary) |
+| Platform | Windows first |
 | Users | Single local user |
-| Runtime | Prism-powered llama-server |
-| Models | Bonsai GGUF (8B, with 4B/1.7B coming) |
+| Runtime | Prism-powered `llama-server` |
+| Models | Bonsai GGUF 8B, with 4B / 1.7B planned |
 
-State is stored in .bonsai-desk/ by default. If an older .prism-launcher/ directory exists, Bonsai Desk reuses it automatically for compatibility.
+App data is stored in `.bonsai-desk/` by default. If an older `.prism-launcher/` folder exists, Bonsai Desk reuses it automatically.
 
----
+## Beginner Setup Guide
 
-## Step-by-Step Setup Tutorial
+If you are new to local development on Windows, follow these steps in order.
 
-Get up and running with Bonsai Desk in about 10 minutes. This tutorial walks you through each step with explanations of what to expect.
+### 1. Install the required software
 
-### Before You Start: Install Prerequisites
+You need Python, Node.js, and Git before launching Bonsai Desk.
 
-First, make sure you have the required software installed on your computer.
+**Python**
+1. Download Python from [python.org/downloads](https://www.python.org/downloads/).
+2. Run the installer.
+3. Check **Add Python to PATH**.
+4. Click **Install Now**.
+5. Open PowerShell and verify:
 
-#### 1.1 Download and Install Python
-
-Python is the programming language the backend runs on.
-
-1. Go to [python.org/downloads](https://www.python.org/downloads/)
-2. Click the "Download Python" button
-3. Run the installer
-4. **Important**: Check the box "Add Python to PATH" at the bottom of the installer
-5. Click "Install Now"
-
-**Verify Python is installed:**
 ```powershell
 python --version
 ```
-You should see something like `Python 3.12.0`.
 
-#### 1.2 Download and Install Node.js
+**Node.js**
+1. Download the **LTS** version from [nodejs.org](https://nodejs.org/).
+2. Install with the default options.
+3. Restart PowerShell.
+4. Verify:
 
-Node.js runs the frontend interface.
-
-1. Go to [nodejs.org](https://nodejs.org/)
-2. Download the **LTS** version (the big button on the left)
-3. Run the installer with default settings
-4. Restart your terminal/PowerShell after installation
-
-**Verify Node.js is installed:**
 ```powershell
 node --version
 npm --version
 ```
-You should see version numbers like `v20.10.0` and `10.2.0`.
 
-#### 1.3 Download and Install Git
+**Git**
+1. Download Git from [git-scm.com/download/win](https://git-scm.com/download/win).
+2. Install with the default options.
+3. Verify:
 
-Git is used to download the Bonsai Desk project.
-
-1. Go to [git-scm.com/download/win](https://git-scm.com/download/win)
-2. Download the installer
-3. Run with default settings (click "Next" through the wizard)
-
-**Verify Git is installed:**
 ```powershell
 git --version
 ```
-You should see something like `git version 2.43.0`.
 
-> **Note**: If you already have Python, Node.js, and Git installed, you can skip to the next section!
+### 2. Download this project
 
----
-
-### Step 1: Download Bonsai Desk
-
-Open PowerShell (search for "PowerShell" in the Start menu) and run:
+Open PowerShell and run:
 
 ```powershell
 git clone https://github.com/Kxrbx/BonsaiDesk.git
 cd BonsaiDesk
 ```
 
-**What just happened?**
-- Git downloaded the Bonsai Desk project to a new folder
-- You are now inside the `BonsaiDesk` folder
-- You should see the folder contents when you run `dir`
+### 3. Install backend and frontend dependencies
 
----
+**Easiest option**
 
-### Step 2: Install Dependencies
+Double-click `install.bat` in the project folder.
 
-Run the bootstrap script to install all required packages:
+This checks whether Python and Node.js are installed, then installs the backend and frontend dependencies for you.
+
+**Manual option**
+
+First try the normal PowerShell script command:
 
 ```powershell
-.\scriptsootstrap.ps1
+.\scripts\bootstrap.ps1
 ```
 
-**What just happened?**
-- A Python virtual environment (`.venv`) was created to keep dependencies isolated
-- Python packages (FastAPI, SQLAlchemy, etc.) were installed for the backend
-- Node packages (React, Vite, etc.) were installed for the frontend
-- This takes 2-5 minutes depending on your internet speed
+If Windows says script execution is disabled, use this version instead:
 
-**Expected output:**
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 ```
+
+When the script finishes, you should see:
+
+```text
 Bootstrap complete.
 ```
 
-> **Note**: The first time you run this, Windows may ask "Do you want to allow this app?" - click Yes.
+What this script does:
+- Creates a Python virtual environment in `.venv/`
+- Installs backend Python packages from `backend/requirements.txt`
+- Installs frontend Node packages inside `frontend/`
 
----
+### 4. Start the app
 
-### Step 3: Launch the Application
+**Recommended option**
 
-There are two ways to start Bonsai Desk:
-
-**Option A: One-Click Launcher (Recommended)**
 ```powershell
 .\launch-app.bat
 ```
 
-**Option B: Manual Start**
+This opens the backend and frontend in separate PowerShell windows and then opens `http://127.0.0.1:5173` in your browser.
+
+**Manual option**
+
+If you prefer to launch the development scripts directly:
+
 ```powershell
-.\scriptsun-dev.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\run-dev.ps1
 ```
 
-**What just happened?**
-- Two new PowerShell windows opened (keep them open!)
-  - One says "Bonsai Desk Backend" - this runs the API server
-  - One says "Bonsai Desk Frontend" - this runs the web interface
-- Your browser should automatically open to `http://127.0.0.1:5173`
+Keep the backend and frontend terminal windows open while using the app. Closing them stops Bonsai Desk.
 
-**What you should see:**
-A browser window with the Bonsai Desk interface, likely showing a welcome screen or setup wizard.
+### 5. Complete the first-time setup wizard
 
-> **Keep these windows open!** Closing them will stop the application.
+The first time the app opens, it will ask how you want to provide the runtime and model.
 
----
-
-### Step 4: First-Time Setup Wizard
-
-The first time you run Bonsai Desk, you'll need to set up the AI runtime and model. The app will guide you through this.
-
-#### Step 4a: Choose Your Setup Option
-
-You'll see two options:
-
-**Option A: Download Official Assets (Recommended)**
-- Click "Download Official Assets"
-- Review and accept the license information
-- Click "Download" to fetch:
-  - The Prism runtime (`llama-server.exe`) - ~50 MB
-  - The Bonsai AI model (`Bonsai-8B.gguf`) - ~5 GB
-- Wait for both downloads to complete (this takes a few minutes)
+**Option A: Download Official Assets**
+- Choose this if you do not already have model/runtime files.
+- The app downloads `llama-server.exe` and the Bonsai `.gguf` model.
+- The model download is large, around 5 GB, so this may take a while.
 
 **Option B: Use Local Files**
-- Click "Use Local Files" if you already have:
-  - A Prism-compatible `llama-server.exe`
-  - A `.gguf` model file
-- Browse to select your files
-- Click "Link Files"
+- Choose this if you already have a Prism-compatible `llama-server.exe` and a `.gguf` model.
+- Browse to those files and link them in the UI.
 
-#### Step 4b: Start the Runtime
+Then click **Start Runtime** and wait for the status indicator to turn green.
 
-Once files are ready:
-1. Click "Start Runtime" button
-2. Wait for the runtime indicator to turn green
-3. The status should show "Running"
+### 6. Start chatting
 
-**What the runtime indicator looks like:**
-- :red_circle: Red = Not running
-- :yellow_circle: Yellow = Starting
-- :green_circle: Green = Running and ready
+1. Click **New Chat**.
+2. Type a message in the box at the bottom.
+3. Press **Enter** or click send.
 
----
+Example prompt:
 
-### Step 5: Start Chatting!
-
-You're all set! Here's how to use Bonsai Desk:
-
-1. **Create a new conversation**: Click "New Chat" in the sidebar
-2. **Type your message**: Enter text in the input box at the bottom
-3. **Send**: Press Enter or click the Send button
-4. **Wait for response**: Watch the AI "think" and stream its response
-
-**Example first message to try:**
-```
+```text
 Hello! Can you explain what you are?
 ```
 
----
+## Common Commands
 
-### Quick Reference: Common Tasks
-
-| Task | How to Do It |
-|------|--------------|
-| Start Bonsai Desk | Run `.\launch-app.bat` |
-| Stop Bonsai Desk | Close the Backend and Frontend windows |
-| Clear conversation | Click "New Chat" in sidebar |
-| Adjust AI settings | Click "Runtime Panel" and modify parameters |
-| Check if running | Look for green indicator in top-right |
-
----
+| Task | Command |
+|------|---------|
+| Install dependencies with one double-click | `install.bat` |
+| Install dependencies | `.\scripts\bootstrap.ps1` |
+| Install dependencies if `.ps1` is blocked | `powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1` |
+| Start the full app | `.\launch-app.bat` |
+| Start backend + frontend manually | `powershell -ExecutionPolicy Bypass -File .\scripts\run-dev.ps1` |
+| Run backend only | `powershell -ExecutionPolicy Bypass -File .\scripts\run-backend.ps1` |
+| Run frontend only | `powershell -ExecutionPolicy Bypass -File .\scripts\run-frontend.ps1` |
+| Run checks before committing | `.\scripts\check.ps1` |
 
 ## Features
 
@@ -254,152 +181,151 @@ Hello! Can you explain what you are?
 - Message editing and regeneration
 
 ### Runtime Management
-- One-click install/start/stop/restart
-- Real-time logs and health monitoring
-- Persistent parameters across sessions
+- One-click install / start / stop / restart
+- Runtime health and logs
+- Persistent runtime settings
 
 ### Inference Controls
-- System prompt customization
-- Temperature, top-k, top-p, min-p sampling
+- System prompt
+- Temperature, top-k, top-p, and min-p
 - Max tokens and context size
 - GPU layers and thread count
 - Reasoning budget and format options
 - Presets: demo, power, max
 
-### Setup Flex
-ibility
-- Official Download: Fetch from Prism/Bonsai upstream sources
-- Local Files: Link existing llama-server.exe and .gguf models
-
----
+### Setup Flexibility
+- Download official Bonsai / Prism assets
+- Link an existing `llama-server.exe` and `.gguf` model
 
 ## Documentation
 
-For detailed information, see the docs folder:
+More detailed docs live in the `docs/` folder:
 
 | Document | Description |
 |----------|-------------|
 | [Installation Guide](./docs/installation.md) | Detailed setup instructions |
 | [Configuration](./docs/configuration.md) | Environment variables and settings |
-| [Usage Guide](./docs/usage.md) | Using the chat interface |
-| [Troubleshooting](./docs/troubleshooting.md) | Common issues and solutions |
+| [Usage Guide](./docs/usage.md) | How to use the chat interface |
+| [Troubleshooting](./docs/troubleshooting.md) | Common issues and fixes |
 | [Architecture](./docs/architecture.md) | System design and data flow |
 | [API Reference](./docs/api.md) | Backend API documentation |
-| [Development](./docs/development.md) | Contributing and development setup |
-
----
+| [Development](./docs/development.md) | Contributor setup and workflow |
 
 ## Configuration
 
-Key environment variables:
+Important environment variables:
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| BONSAI_DESK_HOME | App data directory | .bonsai-desk/ |
-| PRISM_LLAMA_SERVER_PATH | Path to custom llama-server.exe | Auto-detected |
-| PRISM_MODEL_URL | Custom model download URL | Official Bonsai-8B |
-| VITE_API_BASE_URL | Frontend API base URL | http://127.0.0.1:8000 |
+| `BONSAI_DESK_HOME` | App data folder | `.bonsai-desk/` |
+| `PRISM_LLAMA_SERVER_PATH` | Custom `llama-server.exe` path | Auto-detected |
+| `PRISM_MODEL_URL` | Custom model download URL | Official Bonsai 8B URL |
+| `VITE_API_BASE_URL` | Frontend API base URL | `http://127.0.0.1:8000` |
 
-See .env.example for the complete list.
+See `.env.example` for the full list.
 
-### Runtime Resolution Order
-
-If you have multiple runtime options available, Bonsai Desk uses this priority:
-
-1. Local runtime linked from UI
-2. Managed runtime installed by Bonsai Desk
-3. PRISM_LLAMA_SERVER_PATH environment variable
-4. Official Prism/Bonsai demo release
-5. PRISM_LLAMA_CPP_ZIP_URL custom archive
-6. llama-server.exe on system PATH
-
----
+Runtime lookup priority:
+1. Runtime linked in the UI
+2. Runtime installed by Bonsai Desk
+3. `PRISM_LLAMA_SERVER_PATH`
+4. Official Prism / Bonsai demo release
+5. `PRISM_LLAMA_CPP_ZIP_URL`
+6. `llama-server.exe` available on your system `PATH`
 
 ## Troubleshooting
 
-### PowerShell Execution Policy
-If you see "cannot be loaded because running scripts is disabled":
+### PowerShell says scripts are disabled
+
+Use a one-time bypass command:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
+```
+
+Or permanently allow local scripts for your Windows user:
+
 ```powershell
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-### Python Not Found
-Ensure Python is in your PATH:
+### `python` is not recognized
+
+Run:
+
 ```powershell
 python --version
 ```
-If this fails, [reinstall Python](#11-download-and-install-python) with "Add to PATH" checked.
 
-### Node.js Not Found
+If that fails, reinstall Python and make sure **Add Python to PATH** is checked.
+
+### `node` or `npm` is not recognized
+
+Run:
+
 ```powershell
 node --version
+npm --version
 ```
-If this fails, [reinstall Node.js](#12-download-and-install-nodejs).
 
-### Port Already in Use
-If port 8080 is occupied, you will see an error. Fix it by creating a `.env` file:
+If that fails, reinstall Node.js LTS and restart PowerShell.
+
+### Port 8080 is already in use
+
+Create a local `.env` file:
+
 ```powershell
 copy .env.example .env
 notepad .env
 ```
-Change this line:
-```
+
+Change:
+
+```text
 PRISM_RUNTIME_PORT=8080
 ```
-To:
-```
+
+To another free port, for example:
+
+```text
 PRISM_RUNTIME_PORT=8081
 ```
 
-### Runtime Won't Start
-- Ensure the model file downloaded completely (check file size is ~5 GB)
-- Try reducing GPU layers in Runtime Panel
-- Check Windows Security/antivirus isn't blocking `llama-server.exe`
+### The runtime does not start
 
-### Out of Memory
-- Reduce GPU layers in Runtime Panel
-- Reduce context size
-- Close other applications
-- Consider using system RAM instead of GPU
+- Confirm the model download finished and the `.gguf` file is roughly 5 GB.
+- Reduce GPU layers in the Runtime Panel.
+- Check whether Windows Security or antivirus is blocking `llama-server.exe`.
 
-### Browser Shows Blank Page
-- Wait 30 seconds for services to fully start
-- Refresh the page (F5)
-- Check both backend and frontend windows for error messages
-- Verify port 5173 isn't blocked by firewall
+### The browser page is blank
 
-See [docs/troubleshooting.md](./docs/troubleshooting.md) for more solutions.
+- Wait 20 to 30 seconds for the backend and frontend to finish starting.
+- Refresh the page.
+- Check the backend and frontend PowerShell windows for errors.
+- Make sure port `5173` is not blocked by another process.
 
----
+See [docs/troubleshooting.md](./docs/troubleshooting.md) for more help.
 
 ## Development
 
-### Project Structure
+Project layout:
 
-```
+```text
 BonsaiDesk/
-├── backend/          # FastAPI + SQLite
-├── frontend/         # React + Vite + TypeScript
-├── scripts/          # PowerShell automation
-└── docs/             # Documentation
+|-- backend/    # FastAPI + SQLite
+|-- frontend/   # React + Vite + TypeScript
+|-- scripts/    # PowerShell automation
+`-- docs/       # Documentation
 ```
 
-### Quick Commands
+Useful development commands:
 
 ```powershell
-# Run all checks before committing
 .\scripts\check.ps1
-
-# Start backend only
-.\scriptsun-backend.ps1
-
-# Start frontend only
-.\scriptsun-frontend.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\run-backend.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\run-frontend.ps1
 ```
 
-See CONTRIBUTING.md for guidelines.
-
----
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contributor guidelines.
 
 ## Transparency and Licenses
 
@@ -407,23 +333,19 @@ Bonsai Desk downloads assets directly from upstream sources:
 
 | Asset | Source | License |
 |-------|--------|---------|
-| Bonsai Model | prism-ml/Bonsai-8B-gguf | Apache-2.0 |
-| Prism Demo | PrismML-Eng/Bonsai-demo | Apache-2.0 |
-| llama.cpp Fork | PrismML-Eng/llama.cpp | MIT |
-
----
+| Bonsai Model | `prism-ml/Bonsai-8B-gguf` | Apache-2.0 |
+| Prism Demo | `PrismML-Eng/Bonsai-demo` | Apache-2.0 |
+| llama.cpp Fork | `PrismML-Eng/llama.cpp` | MIT |
 
 ## Roadmap
 
-- Bonsai model-size switching (8B / 4B / 1.7B)
-- Improved runtime diagnostics
+- Bonsai model-size switching, including 8B / 4B / 1.7B
+- Better runtime diagnostics
 - UI polish and responsive cleanup
-- Enhanced frontend test coverage
+- More frontend test coverage
 - Desktop packaging
 - Multi-platform support
 
----
-
 ## License
 
-MIT License - see LICENSE for details.
+MIT License. See [LICENSE](./LICENSE) for details.
