@@ -6,7 +6,7 @@
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-3776ab.svg)]()
 [![Node: 18+](https://img.shields.io/badge/node-18+-339933.svg)]()
 
-Local-first chat app for running `prism-ml/Bonsai-8B-gguf` with a ChatGPT-like interface, built-in Prism runtime management, and saved conversation history.
+Local-first chat app for running Bonsai GGUF models (`8B`, `4B`, `1.7B`) with a ChatGPT-like interface, built-in Prism runtime management, model switching, runtime diagnostics, and saved conversation history.
 
 <img width="1690" height="956" alt="Bonsai Desk Interface" src="https://github.com/user-attachments/assets/2cb464c3-60d8-4724-8dbd-5ad79587eb72" />
 
@@ -140,7 +140,7 @@ The first time the app opens, it will ask how you want to provide the runtime an
 **Option A: Download Official Assets**
 - Choose this if you do not already have model/runtime files.
 - The app downloads `llama-server.exe` and the Bonsai `.gguf` model.
-- The model download is large, around 5 GB, so this may take a while.
+- Model download size depends on the selected variant: about 1.16 GB for 8B, 572 MB for 4B, and 248 MB for 1.7B.
 
 **Option B: Use Local Files**
 - Choose this if you already have a Prism-compatible `llama-server.exe` and a `.gguf` model.
@@ -178,11 +178,12 @@ Hello! Can you explain what you are?
 ### Chat Experience
 - ChatGPT-style interface with streaming responses
 - Persistent conversation history
-- Message editing and regeneration
+- Conversation rename/delete actions and a mobile sidebar drawer
 
 ### Runtime Management
 - One-click install / start / stop / restart
 - Runtime health and logs
+- Runtime diagnostics and model variant selection
 - Persistent runtime settings
 
 ### Inference Controls
@@ -219,7 +220,7 @@ Important environment variables:
 |----------|-------------|---------|
 | `BONSAI_DESK_HOME` | App data folder | `.bonsai-desk/` |
 | `PRISM_LLAMA_SERVER_PATH` | Custom `llama-server.exe` path | Auto-detected |
-| `PRISM_MODEL_URL` | Custom model download URL | Official Bonsai 8B URL |
+| `PRISM_MODEL_URL` | Custom model download URL | Official selected Bonsai variant URL |
 | `VITE_API_BASE_URL` | Frontend API base URL | `http://127.0.0.1:8000` |
 
 See `.env.example` for the full list.
@@ -292,8 +293,8 @@ PRISM_RUNTIME_PORT=8081
 
 ### The runtime does not start
 
-- Confirm the model download finished and the `.gguf` file is roughly 5 GB.
-- Reduce GPU layers in the Runtime Panel.
+- Confirm the model download finished and the `.gguf` file size matches the selected variant.
+- Reduce GPU layers in the Runtime Modal.
 - Check whether Windows Security or antivirus is blocking `llama-server.exe`.
 
 ### The browser page is blank
@@ -333,7 +334,7 @@ Bonsai Desk downloads assets directly from upstream sources:
 
 | Asset | Source | License |
 |-------|--------|---------|
-| Bonsai Model | `prism-ml/Bonsai-8B-gguf` | Apache-2.0 |
+| Bonsai Models | `prism-ml/Bonsai-8B-gguf`, `prism-ml/Bonsai-4B-gguf`, `prism-ml/Bonsai-1.7B-gguf` | Apache-2.0 |
 | Prism Demo | `PrismML-Eng/Bonsai-demo` | Apache-2.0 |
 | llama.cpp Fork | `PrismML-Eng/llama.cpp` | MIT |
 
@@ -343,6 +344,10 @@ Bonsai Desk downloads assets directly from upstream sources:
 - Broader multi-platform support beyond the current Windows-first workflow
 - More automated frontend coverage around UI interaction flows
 - Continued setup/runtime UX polish and benchmarking-oriented diagnostics
+
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## License
 

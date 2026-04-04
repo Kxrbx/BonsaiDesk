@@ -88,8 +88,8 @@ npm run build
 
 ## Release Checklist
 
-1. Update versions in `backend/app/main.py`, `frontend/package.json`, and `frontend/package-lock.json`.
+1. Update versions in `backend/app/__init__.py`, `frontend/package.json`, and `frontend/package-lock.json`.
 2. Update [CHANGELOG.md](../CHANGELOG.md).
 3. Run `.\scripts\check.ps1`.
-4. Create and push a tag such as `v0.2.0`.
+4. Create and push a tag such as `v0.3.0`.
 5. Draft a GitHub release.

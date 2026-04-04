@@ -15,17 +15,19 @@ Learn how to use Bonsai Desk after installation.
 ### Sidebar
 - **New Chat** starts a new conversation.
 - **Conversation History** lets you reopen previous chats.
-- **Runtime Panel** opens runtime controls and logs.
+- **Runtime** opens the modal for runtime settings, Bonsai model variants, diagnostics, and logs.
+- On mobile, **Conversations** opens the sidebar drawer.
 
 ### Chat Area
 - The center panel shows conversation messages.
 - The input box at the bottom sends new prompts.
 - Responses stream in as the model generates text.
 
-### Runtime Panel
+### Runtime Modal
 - Start, stop, and restart the runtime.
 - Adjust inference settings such as temperature, top-k, top-p, max tokens, context size, GPU layers, and system prompt.
-- View runtime health and logs.
+- Switch between Bonsai `8B`, `4B`, and `1.7B`.
+- View runtime diagnostics, health checks, and logs.
 
 ## Conversations
 
@@ -58,7 +60,9 @@ Provide concrete suggestions and mention tradeoffs.
 
 | Issue | What to Try |
 |------|-------------|
-| Runtime is red or gray | Open Runtime Panel and click **Start Runtime** |
+| Runtime is red or gray | Open the Runtime Modal and click **Start Runtime** |
+| Wrong model variant is active | Open the Runtime Modal and select `8B`, `4B`, or `1.7B` |
+| Setup cannot find your files | Use **Browse...** or paste the full local path manually |
 | Responses are too short | Increase max tokens |
 | Responses are too random | Lower temperature |
 | Responses are repetitive | Increase temperature or top-p |

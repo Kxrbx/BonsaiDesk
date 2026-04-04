@@ -1,287 +1,264 @@
 # API Reference
 
-REST API documentation for the Bonsai Desk backend.
+Backend REST API reference for Bonsai Desk `0.3.0`.
 
 ## Base URL
 
-```
-http://127.0.0.1:8000/api/v1
+```text
+http://127.0.0.1:8000/api
 ```
 
-Override with `VITE_API_BASE_URL` environment variable.
+Override the frontend target with `VITE_API_BASE_URL`.
 
-## Endpoints Overview
+## Endpoint Overview
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| /health | GET | Health check |
-| /runtime/status | GET | Get runtime status |
-| /runtime/start | POST | Start runtime |
-| /runtime/stop | POST | Stop runtime |
-| /runtime/settings | GET/POST | Get/update settings |
-| /models | GET | List available models |
-| /conversations | GET/POST | List/create conversations |
-| /conversations/{id} | GET/PUT/DELETE | Manage conversation |
-| /chat | POST | Send chat message |
-| /chat/stream | POST | Stream chat response |
+| `/runtime/overview` | GET | Runtime status, config, models, install progress, source metadata, and diagnostics |
+| `/runtime/status` | GET | Runtime status only |
+| `/runtime/config` | GET / PUT | Read or update persisted runtime settings |
+| `/runtime/install` | POST | Download the official Prism runtime and selected Bonsai model |
+| `/runtime/install-progress` | GET | Poll background installation progress |
+| `/runtime/diagnostics` | GET | Structured runtime checks, GPU info, runtime version, and recent logs |
+| `/runtime/browse-binary` | POST | Open a native Windows picker for `llama-server.exe` |
+| `/runtime/browse-model` | POST | Open a native Windows picker for `.gguf` models |
+| `/runtime/use-existing-assets` | POST | Persist user-selected local runtime/model paths |
+| `/runtime/start` | POST | Start `llama-server` |
+| `/runtime/stop` | POST | Stop `llama-server` |
+| `/runtime/restart` | POST | Restart `llama-server` |
+| `/runtime/logs` | GET | Return recent runtime logs |
+| `/models` | GET | List Bonsai variants and custom linked model state |
+| `/models/select` | POST | Switch active Bonsai variant |
+| `/models/install` | POST | Install a specific Bonsai variant |
+| `/conversations` | GET / POST | List or create conversations |
+| `/conversations/{id}` | GET / PATCH / DELETE | Read, rename, or delete one conversation |
+| `/chat/stream` | POST | Stream a chat response as SSE |
 
-## Health Check
+`GET /health` is available outside `/api` for a simple backend health check.
 
-### GET /health
+## Runtime Overview
 
-Check if backend is running.
+### GET `/runtime/overview`
 
-**Response**:
+Returns the full bootstrap payload used by the frontend.
+
 ```json
 {
-  "status": "ok"
+  "status": {
+    "installed": true,
+    "running": false,
+    "ready": false,
+    "pid": null,
+    "host": "127.0.0.1",
+    "port": 8080,
+    "model_loaded": "Bonsai-8B.gguf",
+    "message": "Runtime is stopped.",
+    "install_message": "Runtime and model are available."
+  },
+  "config": {
+    "temperature": 0.6,
+    "top_k": 40,
+    "top_p": 0.92,
+    "min_p": 0.05,
+    "max_tokens": 1024,
+    "ctx_size": 65536,
+    "gpu_layers": 99,
+    "threads": 8,
+    "batch_size": 2048,
+    "system_prompt": "You are a helpful local AI assistant powered by Bonsai.",
+    "reasoning_budget": -1,
+    "reasoning_format": "parsed",
+    "enable_thinking": true,
+    "model_filename": "Bonsai-8B.gguf",
+    "model_variant": "8B",
+    "runtime_binary_path": "",
+    "model_file_path": ""
+  },
+  "models": [
+    {
+      "id": "prism-ml/Bonsai-8B-gguf",
+      "name": "Bonsai 8B",
+      "filename": "Bonsai-8B.gguf",
+      "size_hint": "1.16 GB",
+      "local_path": "E:\\OpenCode-DEV\\Prism Launcher\\.bonsai-desk\\models\\Bonsai-8B.gguf",
+      "installed": true,
+      "variant": "8B",
+      "download_url": "https://huggingface.co/prism-ml/Bonsai-8B-gguf/resolve/main/Bonsai-8B.gguf?download=true",
+      "requirements_hint": "Recommended for RTX-class GPUs and higher-quality local reasoning.",
+      "is_active": true,
+      "is_downloaded": true
+    }
+  ],
+  "install_progress": {
+    "state": "completed",
+    "current_step": "Already installed",
+    "detail": "Runtime and model are available.",
+    "progress": 100,
+    "runtime_progress": 100,
+    "model_progress": 100,
+    "error": null,
+    "started_at": null,
+    "updated_at": null
+  },
+  "sources": [
+    {
+      "kind": "Model",
+      "name": "Bonsai 8B GGUF",
+      "license_name": "Apache-2.0",
+      "source_url": "https://huggingface.co/prism-ml/Bonsai-8B-gguf"
+    }
+  ],
+  "diagnostics": {
+    "platform_label": "Windows",
+    "gpu_label": "NVIDIA GPU detected",
+    "cuda_label": "CUDA available",
+    "runtime_version": "llama-server --version output",
+    "checks": [
+      {
+        "key": "runtime_binary",
+        "label": "Runtime binary",
+        "state": "ok",
+        "detail": "Resolved managed Prism runtime.",
+        "action": ""
+      }
+    ],
+    "recent_logs": []
+  }
 }
 ```
 
-## Runtime Endpoints
+## Runtime Config
 
-### GET /runtime/status
+### GET `/runtime/config`
 
-Get current runtime status and configuration.
+Returns the persisted `RuntimeConfig`.
 
-**Response**:
+### PUT `/runtime/config`
+
+Persists runtime and inference settings.
+
 ```json
 {
-  "status": "running",
-  "pid": 12345,
-  "host": "127.0.0.1",
-  "port": 8080,
-  "model_loaded": "Bonsai-8B.gguf",
-  "gpu_layers": 35,
-  "context_size": 4096
-}
-```
-
-### POST /runtime/start
-
-Start the llama-server runtime.
-
-**Request Body**:
-```json
-{
-  "gpu_layers": 35,
-  "context_size": 4096,
-  "threads": 4
-}
-```
-
-**Response**:
-```json
-{
-  "status": "starting",
-  "pid": 12345
-}
-```
-
-### POST /runtime/stop
-
-Stop the runtime.
-
-**Response**:
-```json
-{
-  "status": "stopped"
-}
-```
-
-### GET /runtime/settings
-
-Get current runtime settings.
-
-### POST /runtime/settings
-
-Update runtime settings.
-
-**Request Body**:
-```json
-{
-  "temperature": 0.7,
+  "temperature": 0.6,
   "top_k": 40,
-  "top_p": 0.9,
-  "max_tokens": 2048,
-  "system_prompt": "You are a helpful assistant."
+  "top_p": 0.92,
+  "min_p": 0.05,
+  "max_tokens": 1024,
+  "ctx_size": 65536,
+  "gpu_layers": 99,
+  "threads": 8,
+  "batch_size": 2048,
+  "system_prompt": "You are a helpful local AI assistant powered by Bonsai.",
+  "reasoning_budget": -1,
+  "reasoning_format": "parsed",
+  "enable_thinking": true,
+  "model_filename": "Bonsai-8B.gguf",
+  "model_variant": "8B",
+  "runtime_binary_path": "",
+  "model_file_path": ""
 }
 ```
+
+`reasoning_budget` is normalized to `-1` (unrestricted thinking) or `0` (thinking disabled).
 
 ## Model Endpoints
 
-### GET /models
+### GET `/models`
 
-List available models.
+Returns all Bonsai variants and marks which one is active and downloaded.
 
-**Response**:
+### POST `/models/select`
+
 ```json
 {
-  "models": [
-    {
-      "id": "bonsai-8b",
-      "name": "Bonsai-8B",
-      "filename": "Bonsai-8B.gguf",
-      "size": "8B",
-      "downloaded": true,
-      "path": "C:\Users\...\Bonsai-8B.gguf"
-    }
-  ]
+  "variant": "4B"
 }
 ```
 
-## Conversation Endpoints
+### POST `/models/install`
 
-### GET /conversations
-
-List all conversations.
-
-**Response**:
 ```json
 {
-  "conversations": [
-    {
-      "id": "uuid-123",
-      "title": "Python Help",
-      "created_at": "2026-04-02T10:00:00Z",
-      "updated_at": "2026-04-02T11:30:00Z",
-      "message_count": 12
-    }
-  ]
+  "variant": "1.7B"
 }
 ```
 
-### POST /conversations
+## Local Asset Linking
 
-Create a new conversation.
+### POST `/runtime/use-existing-assets`
 
-**Request Body**:
+```json
+{
+  "runtime_binary_path": "D:\\Tools\\Prism\\llama-server.exe",
+  "model_file_path": "D:\\Models\\Bonsai-4B.gguf"
+}
+```
+
+Send `null` or `""` to clear one of these linked paths.
+
+## Conversations
+
+### GET `/conversations`
+
+Returns a list of conversation summaries.
+
+### POST `/conversations`
+
 ```json
 {
   "title": "New Chat"
 }
 ```
 
-### GET /conversations/{id}
+### GET `/conversations/{id}`
 
-Get a specific conversation with messages.
+Returns one conversation with its messages.
 
-**Response**:
-```json
-{
-  "id": "uuid-123",
-  "title": "Python Help",
-  "messages": [
-    {
-      "id": "msg-1",
-      "role": "user",
-      "content": "How do I use list comprehensions?",
-      "created_at": "2026-04-02T10:00:00Z"
-    },
-    {
-      "id": "msg-2",
-      "role": "assistant",
-      "content": "List comprehensions provide a concise way...",
-      "created_at": "2026-04-02T10:00:05Z"
-    }
-  ]
-}
-```
-
-### PUT /conversations/{id}
-
-Update conversation (rename).
-
-**Request Body**:
-```json
-{
-  "title": "New Title"
-}
-```
-
-### DELETE /conversations/{id}
-
-Delete a conversation.
-
-## Chat Endpoints
-
-### POST /chat
-
-Send a message and get a complete response.
-
-**Request Body**:
-```json
-{
-  "conversation_id": "uuid-123",
-  "message": "Explain Python decorators",
-  "temperature": 0.7,
-  "max_tokens": 2048
-}
-```
-
-**Response**:
-```json
-{
-  "message": {
-    "id": "msg-3",
-    "role": "assistant",
-    "content": "Python decorators are a powerful feature..."
-  }
-}
-```
-
-### POST /chat/stream
-
-Stream a response (Server-Sent Events).
-
-**Request Body**:
-```json
-{
-  "conversation_id": "uuid-123",
-  "message": "Write a haiku about coding"
-}
-```
-
-**Response**: Stream of SSE events
-
-```
-event: message
-data: {"chunk": "Lines"}
-
-event: message
-data: {"chunk": " of"}
-
-event: message
-data: {"chunk": " code"}
-
-event: done
-data: {}
-```
-
-## Error Responses
-
-All errors follow this format:
+### PATCH `/conversations/{id}`
 
 ```json
 {
-  "error": {
-    "code": "RUNTIME_NOT_RUNNING",
-    "message": "Runtime must be started before chatting",
-    "details": {}
-  }
+  "title": "Renamed Chat"
 }
 ```
 
-### Common Error Codes
+### DELETE `/conversations/{id}`
 
-| Code | HTTP Status | Description |
-|------|-------------|-------------|
-| RUNTIME_NOT_RUNNING | 400 | Runtime needs to be started |
-| MODEL_NOT_FOUND | 404 | Model file not found |
-| CONVERSATION_NOT_FOUND | 404 | Conversation doesn't exist |
-| INVALID_PARAMETERS | 400 | Bad request parameters |
-| INTERNAL_ERROR | 500 | Server error |
+```json
+{
+  "deleted": true
+}
+```
 
-## Authentication
+## Streaming Chat
 
-Currently, Bonsai Desk does not implement authentication as it's designed for local single-user use. The API is bound to localhost only.
+### POST `/chat/stream`
+
+```json
+{
+  "conversation_id": "conversation-uuid",
+  "prompt": "Explain what Bonsai Desk does."
+}
+```
+
+Response is streamed as newline-separated SSE `data:` events containing JSON objects with a `type` field:
+
+```text
+data: {"type":"token","content":"Hello","conversation_id":"conversation-uuid"}
+
+data: {"type":"token","content":" there","conversation_id":"conversation-uuid"}
+
+data: {"type":"done","content":"","conversation_id":"conversation-uuid"}
+```
+
+If the upstream runtime fails after streaming starts, the backend sends a terminal `error` event and the frontend rejects the stream.
+
+## Errors
+
+Request-time failures use FastAPI's default JSON shape:
+
+```json
+{
+  "detail": "Conversation not found."
+}
+```

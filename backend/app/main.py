@@ -14,6 +14,7 @@ from fastapi.openapi.docs import get_swagger_ui_html
 from fastapi.openapi.utils import get_openapi
 from fastapi.responses import HTMLResponse
 
+from app import __version__
 from app.api.routes_chat import router as chat_router
 from app.api.routes_conversations import router as conversations_router
 from app.api.routes_models import router as models_router
@@ -47,7 +48,7 @@ app = FastAPI(
     title=settings.app_name,
     lifespan=lifespan,
     description="Local-first chat API for running Bonsai models with Prism runtime",
-    version="0.2.0",
+    version=__version__,
     docs_url=None,  # Disable default docs, use custom endpoint
     redoc_url=None,  # Disable default redoc
 )
@@ -110,7 +111,7 @@ async def get_openapi_endpoint():
     """
     return get_openapi(
         title=settings.app_name,
-        version="0.2.0",
+        version=__version__,
         description="Local-first chat API for running Bonsai models with Prism runtime",
         routes=app.routes,
     )
