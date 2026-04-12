@@ -6,6 +6,7 @@ from app.core.schemas import (
     FileSelectionResult,
     InstallProgress,
     RuntimeConfig,
+    RuntimeDiagnostics,
     RuntimeOverview,
     RuntimeStatus,
     UseExistingAssetsRequest,
@@ -26,9 +27,10 @@ async def runtime_overview() -> RuntimeOverview:
     return RuntimeOverview(
         status=await runtime_manager.get_status(),
         config=config,
-        models=[runtime_manager.get_model_descriptor()],
+        models=runtime_manager.get_model_descriptors(),
         install_progress=runtime_manager.get_install_progress(),
         sources=runtime_manager.get_asset_sources(),
+        diagnostics=await runtime_manager.get_diagnostics(),
     )
 
 
@@ -45,6 +47,11 @@ def update_runtime_config(config: RuntimeConfig) -> RuntimeConfig:
 @router.get("/install-progress", response_model=InstallProgress)
 def get_install_progress() -> InstallProgress:
     return runtime_manager.get_install_progress()
+
+
+@router.get("/diagnostics", response_model=RuntimeDiagnostics)
+async def get_runtime_diagnostics() -> RuntimeDiagnostics:
+    return await runtime_manager.get_diagnostics()
 
 
 @router.post("/browse-binary", response_model=FileSelectionResult)
@@ -72,9 +79,10 @@ async def use_existing_assets(payload: UseExistingAssetsRequest) -> RuntimeOverv
     return RuntimeOverview(
         status=await runtime_manager.get_status(),
         config=config,
-        models=[runtime_manager.get_model_descriptor()],
+        models=runtime_manager.get_model_descriptors(),
         install_progress=runtime_manager.get_install_progress(),
         sources=runtime_manager.get_asset_sources(),
+        diagnostics=await runtime_manager.get_diagnostics(),
     )
 
 

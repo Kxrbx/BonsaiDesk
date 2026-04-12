@@ -11,11 +11,22 @@ if (Test-Path $venvPython) {
 
 Write-Host "Building frontend..."
 $frontendPath = Join-Path $root "frontend"
-& powershell.exe -NoProfile -Command "Set-Location '$frontendPath'; npm run build"
+Push-Location $frontendPath
+npm run build
 if ($LASTEXITCODE -ne 0) {
-  Write-Host "Frontend build failed in script mode. Retry manually with: Set-Location '$frontendPath'; npm run build" -ForegroundColor Yellow
+  Pop-Location
+  Write-Host "Frontend build failed. Retry manually with: Set-Location '$frontendPath'; npm run build" -ForegroundColor Yellow
   exit $LASTEXITCODE
 }
+
+Write-Host "Running frontend logic tests..."
+npm run test:logic
+if ($LASTEXITCODE -ne 0) {
+  Pop-Location
+  Write-Host "Frontend logic tests failed. Retry manually with: Set-Location '$frontendPath'; npm run test:logic" -ForegroundColor Yellow
+  exit $LASTEXITCODE
+}
+Pop-Location
 
 Write-Host "Running backend unit tests..."
 Push-Location (Join-Path $root "backend")

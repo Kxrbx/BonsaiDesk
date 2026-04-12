@@ -20,14 +20,14 @@ Complete guide for installing and setting up Bonsai Desk on Windows.
 |-----------|---------|-------------|-------|
 | **OS** | Windows 10 (1903+) | Windows 11 | 64-bit required |
 | **CPU** | 4 cores | 8+ cores | AVX2 support recommended |
-| **RAM** | 8 GB | 16 GB+ | 8B model needs ~6GB |
+| **RAM** | 8 GB | 16 GB+ | Prefer 1.7B/4B on smaller machines, 8B for better quality |
 | **GPU** | Integrated | NVIDIA 8GB+ VRAM | CUDA optional but faster |
-| **Storage** | 10 GB free | 20 GB free | SSD recommended |
+| **Storage** | 4 GB free | 20 GB free | Depends on model variant; SSD recommended |
 | **Internet** | 10 Mbps | 50+ Mbps | For model download |
 
 #### Software
 
-- **Python** 3.8 or higher (3.10-3.12 recommended)
+- **Python** 3.8 or higher
 - **Node.js** 18 LTS or higher
 - **PowerShell** 5.1 or higher (included in Windows)
 - **Git** 2.30 or higher
@@ -76,8 +76,11 @@ git clone https://github.com/Kxrbx/BonsaiDesk.git
 # Navigate to project folder
 cd BonsaiDesk
 
-# Run bootstrap script
-.\scripts\bootstrap.ps1
+# Easiest option
+.\install.bat
+
+# Manual fallback
+powershell -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1
 ```
 
 The bootstrap script will:
@@ -109,13 +112,13 @@ Desktop installers will be available in future releases.
 Start the application:
 
 ```powershell
-.\scripts\run-dev.ps1
+.\launch-app.bat
 ```
 
-Or use the launcher:
+Or start the dev scripts directly:
 
 ```powershell
-.\launch-app.bat
+powershell -ExecutionPolicy Bypass -File .\scripts\run-dev.ps1
 ```
 
 ### Setup Wizard
@@ -124,13 +127,14 @@ The first time you access the app (http://127.0.0.1:5173), you'll see the setup 
 
 #### Option A: Official Download (Recommended)
 
-1. Select "Download Official Assets"
-2. Review the upstream sources and licenses
-3. Click "Download" to fetch:
+1. Select the Bonsai variant you want (`8B`, `4B`, or `1.7B`)
+2. Select "Download Official Assets"
+3. Review the upstream sources and licenses
+4. Click "Download" to fetch:
    - Prism `llama-server.exe` (~50 MB)
-   - Bonsai-8B.gguf model (~5 GB)
-4. Wait for downloads to complete
-5. Click "Start Runtime"
+   - The selected Bonsai `.gguf` model (~1.16 GB for 8B, ~572 MB for 4B, ~248 MB for 1.7B)
+5. Wait for downloads to complete
+6. Click "Start Runtime"
 
 #### Option B: Use Existing Files
 
@@ -141,7 +145,7 @@ The first time you access the app (http://127.0.0.1:5173), you'll see the setup 
 3. Click "Link Files"
 4. Click "Start Runtime"
 
-> **Note**: Local files are not copied or moved. Bonsai Desk stores the paths only.
+> **Note**: Local files are not copied or moved. Bonsai Desk stores the paths only and marks them as linked assets.
 
 ## Verification
 
@@ -170,8 +174,8 @@ npm list react
 If something doesn't work:
 
 ```powershell
-# Backend logs are in terminal where run-dev.ps1 is running
-# Runtime logs are visible in the UI (Runtime Panel)
+# Backend logs are in the "Bonsai Desk Backend" terminal opened by launch-app.bat
+# Runtime logs are visible in the UI (Runtime Modal)
 # App data is in:
 ls $env:USERPROFILE\.bonsai-desk\
 ```

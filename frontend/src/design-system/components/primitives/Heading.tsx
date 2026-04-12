@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 
+type HeadingElement = "h1" | "h2" | "h3" | "h4" | "h5" | "h6";
+
 type DisplayVariant = "display-hero" | "display-large" | "display-medium" | "display-small";
 type HeadingVariant = "heading-large" | "heading-medium" | "heading-small";
 type HeadingFont = "display" | "sans";
@@ -90,7 +92,15 @@ export function Heading({
   weight = "semibold",
   className = "",
 }: HeadingProps) {
-  const Component = `h${level}` as keyof JSX.IntrinsicElements;
+  const componentMap: Record<number, HeadingElement> = {
+    1: "h1",
+    2: "h2",
+    3: "h3",
+    4: "h4",
+    5: "h5",
+    6: "h6",
+  };
+  const Component = componentMap[level];
 
   const baseStyle = variant
     ? variant.startsWith("display-")

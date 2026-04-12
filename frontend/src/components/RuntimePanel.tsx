@@ -1,6 +1,6 @@
 import { useEffect, type ChangeEvent } from "react";
 import type { RuntimePreset } from "../lib/runtime-config";
-import type { RuntimeConfig, RuntimeStatus } from "../types";
+import type { ModelDescriptor, RuntimeConfig, RuntimeDiagnostics, RuntimeStatus } from "../types";
 
 export type RuntimePanelTab = "runtime" | "parameters" | "logs";
 
@@ -9,6 +9,8 @@ interface RuntimePanelProps {
   activeTab: RuntimePanelTab;
   runtimeStatus: RuntimeStatus | null;
   runtimeConfig: RuntimeConfig | null;
+  diagnostics: RuntimeDiagnostics | null;
+  models: ModelDescriptor[];
   activePreset: RuntimePreset | "custom" | null;
   hasUnsavedChanges: boolean;
   logs: string[];
@@ -17,6 +19,7 @@ interface RuntimePanelProps {
   onTabChange: (tab: RuntimePanelTab) => void;
   onChange: (nextConfig: RuntimeConfig) => void;
   onApplyPreset: (preset: RuntimePreset) => void;
+  onSelectModelVariant: (variant: string) => void;
   onSave: () => void;
   onStart: () => void;
   onStop: () => void;
@@ -30,11 +33,15 @@ function field(
   onChange: (nextValue: string) => void,
   type = "text",
   multiline = false,
-  hint?: string
+  hint?: string,
+  fieldName?: string
 ) {
   const commonProps = {
     value,
+    name: fieldName,
+    autoComplete: "off" as const,
     onChange: (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => onChange(event.target.value),
+    ...(type === "number" && { inputMode: "decimal" as const }),
   };
 
   return (
@@ -55,12 +62,13 @@ function selectField(
   value: string | number,
   onChange: (nextValue: string) => void,
   options: Array<{ value: string; label: string }>,
-  hint?: string
+  hint?: string,
+  fieldName?: string
 ) {
   return (
     <label className="config-field">
       <span>{label}</span>
-      <select value={String(value)} onChange={(event) => onChange(event.target.value)}>
+      <select name={fieldName} value={String(value)} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -77,6 +85,8 @@ export function RuntimePanel({
   activeTab,
   runtimeStatus,
   runtimeConfig,
+  diagnostics,
+  models,
   activePreset,
   hasUnsavedChanges,
   logs,
@@ -85,6 +95,7 @@ export function RuntimePanel({
   onTabChange,
   onChange,
   onApplyPreset,
+  onSelectModelVariant,
   onSave,
   onStart,
   onStop,
@@ -214,6 +225,26 @@ export function RuntimePanel({
               </section>
 
               <section className="runtime-detail-grid">
+                <article className="runtime-card runtime-card--span">
+                  <div className="runtime-card__top">
+                    <h4>Bonsai variant</h4>
+                  </div>
+                  <div className="runtime-model-grid">
+                    {models.map((model) => (
+                      <button
+                        key={model.variant}
+                        className={`runtime-model-chip ${model.is_active ? "runtime-model-chip--active" : ""}`}
+                        disabled={model.is_active}
+                        onClick={() => onSelectModelVariant(model.variant)}
+                      >
+                        <strong>{model.name}</strong>
+                        <span>{model.size_hint} | {model.is_downloaded ? "Downloaded" : "Not downloaded"}</span>
+                        <em>{model.requirements_hint}</em>
+                      </button>
+                    ))}
+                  </div>
+                </article>
+
                 <article className="runtime-card">
                   <div className="runtime-card__top">
                     <h4>Runtime identity</h4>
@@ -259,6 +290,27 @@ export function RuntimePanel({
                       <span>Reasoning</span>
                       <strong>{runtimeConfig.enable_thinking ? "Thinking enabled" : "Thinking disabled"} | Budget {runtimeConfig.reasoning_budget}</strong>
                     </div>
+                  </div>
+                </article>
+
+                <article className="runtime-card runtime-card--span">
+                  <div className="runtime-card__top">
+                    <div>
+                      <h4>Diagnostics</h4>
+                      <span>{diagnostics?.platform_label ?? "Platform unknown"} | {diagnostics?.gpu_label ?? "GPU unknown"} | {diagnostics?.cuda_label ?? "CUDA unknown"}</span>
+                    </div>
+                  </div>
+                  <div className="runtime-diagnostics-grid">
+                    {(diagnostics?.checks ?? []).map((check) => (
+                      <div key={check.id} className={`runtime-diagnostic-tile runtime-diagnostic-tile--${check.status}`}>
+                        <div className="runtime-diagnostic-tile__top">
+                          <strong>{check.label}</strong>
+                          <span>{check.status.toUpperCase()}</span>
+                        </div>
+                        <p>{check.detail}</p>
+                        {check.action_hint ? <small>{check.action_hint}</small> : null}
+                      </div>
+                    ))}
                   </div>
                 </article>
               </section>
@@ -328,6 +380,8 @@ export function RuntimePanel({
                     (next) => onChange({ ...runtimeConfig, system_prompt: next }),
                     "text",
                     true,
+                    undefined,
+                    "system_prompt",
                   )}
                 </section>
 
@@ -337,11 +391,29 @@ export function RuntimePanel({
                     <span>Preset buttons update these values immediately in the form.</span>
                   </div>
                   <div className="config-grid config-grid--compact">
-                    {field("Temperature", runtimeConfig.temperature, (next) => onChange({ ...runtimeConfig, temperature: Number(next) }), "number")}
-                    {field("Top-k", runtimeConfig.top_k, (next) => onChange({ ...runtimeConfig, top_k: Number(next) }), "number")}
-                    {field("Top-p", runtimeConfig.top_p, (next) => onChange({ ...runtimeConfig, top_p: Number(next) }), "number")}
-                    {field("Min-p", runtimeConfig.min_p, (next) => onChange({ ...runtimeConfig, min_p: Number(next) }), "number")}
-                    {field("Max tokens", runtimeConfig.max_tokens, (next) => onChange({ ...runtimeConfig, max_tokens: Number(next) }), "number")}
+                    {field("Temperature", runtimeConfig.temperature, (next) => onChange({ ...runtimeConfig, temperature: Number(next) }), "number", false, undefined, "temperature")}
+                    {selectField(
+                      "Bonsai variant",
+                      runtimeConfig.model_variant,
+                      (next) => onSelectModelVariant(next),
+                      [
+                        ...(runtimeConfig.model_variant === "custom"
+                          ? [{ value: "custom", label: "Custom linked GGUF" }]
+                          : []),
+                        ...models
+                        .filter((model) => model.variant !== "custom")
+                        .map((model) => ({
+                          value: model.variant,
+                          label: `${model.name} (${model.size_hint})${model.is_downloaded ? "" : " - not downloaded"}`,
+                        })),
+                      ],
+                      "Switches the active model config and may require installing that variant.",
+                      "model_variant",
+                    )}
+                    {field("Top-k", runtimeConfig.top_k, (next) => onChange({ ...runtimeConfig, top_k: Number(next) }), "number", false, undefined, "top_k")}
+                    {field("Top-p", runtimeConfig.top_p, (next) => onChange({ ...runtimeConfig, top_p: Number(next) }), "number", false, undefined, "top_p")}
+                    {field("Min-p", runtimeConfig.min_p, (next) => onChange({ ...runtimeConfig, min_p: Number(next) }), "number", false, undefined, "min_p")}
+                    {field("Max tokens", runtimeConfig.max_tokens, (next) => onChange({ ...runtimeConfig, max_tokens: Number(next) }), "number", false, undefined, "max_tokens")}
                   </div>
                 </section>
 
@@ -351,7 +423,7 @@ export function RuntimePanel({
                     <span>Used when the local server starts or restarts.</span>
                   </div>
                   <div className="config-grid config-grid--compact">
-                    {field("Model filename", runtimeConfig.model_filename, (next) => onChange({ ...runtimeConfig, model_filename: next }))}
+                    {field("Model filename", runtimeConfig.model_filename, (next) => onChange({ ...runtimeConfig, model_filename: next }), "text", false, undefined, "model_filename")}
                     {field(
                       "Context",
                       runtimeConfig.ctx_size,
@@ -359,9 +431,10 @@ export function RuntimePanel({
                       "number",
                       false,
                       "0 keeps Prism auto-fit enabled",
+                      "ctx_size",
                     )}
-                    {field("GPU layers", runtimeConfig.gpu_layers, (next) => onChange({ ...runtimeConfig, gpu_layers: Number(next) }), "number")}
-                    {field("Threads", runtimeConfig.threads, (next) => onChange({ ...runtimeConfig, threads: Number(next) }), "number")}
+                    {field("GPU layers", runtimeConfig.gpu_layers, (next) => onChange({ ...runtimeConfig, gpu_layers: Number(next) }), "number", false, undefined, "gpu_layers")}
+                    {field("Threads", runtimeConfig.threads, (next) => onChange({ ...runtimeConfig, threads: Number(next) }), "number", false, undefined, "threads")}
                   </div>
                 </section>
 
@@ -380,8 +453,9 @@ export function RuntimePanel({
                         { value: "0", label: "Disabled (0)" },
                       ],
                       "Current Prism runtime only supports -1 or 0 for this flag.",
+                      "reasoning_budget",
                     )}
-                    {field("Reasoning format", runtimeConfig.reasoning_format, (next) => onChange({ ...runtimeConfig, reasoning_format: next }))}
+                    {field("Reasoning format", runtimeConfig.reasoning_format, (next) => onChange({ ...runtimeConfig, reasoning_format: next }), "text", false, undefined, "reasoning_format")}
                   </div>
                   <label className="toggle-field">
                     <input

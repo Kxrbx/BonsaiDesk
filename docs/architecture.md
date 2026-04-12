@@ -1,253 +1,123 @@
 # Architecture Overview
 
-System design, data flow, and component architecture of Bonsai Desk.
-
-## Table of Contents
-
-- [High-Level Architecture](#high-level-architecture)
-- [Component Overview](#component-overview)
-- [Data Flow](#data-flow)
-- [Technology Stack](#technology-stack)
-- [Storage Layer](#storage-layer)
-- [Runtime Management](#runtime-management)
+System design for Bonsai Desk `0.3.0`.
 
 ## High-Level Architecture
 
-Bonsai Desk follows a client-server architecture with three main layers:
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      Frontend (Browser)                     │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │  Chat UI    │  │   Sidebar   │  │   Runtime Panel     │ │
-│  └─────────────┘  └─────────────┘  └─────────────────────┘ │
-└──────────────────────────┬──────────────────────────────────┘
-                           │ HTTP/WebSocket
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    Backend (FastAPI)                        │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐ │
-│  │   API       │  │   Runtime   │  │    Persistence      │ │
-│  │  Routes     │  │   Manager   │  │     (SQLite)        │ │
-│  └─────────────┘  └──────┬──────┘  └─────────────────────┘ │
-└──────────────────────────┼──────────────────────────────────┘
-                           │ Process Management
-                           ▼
-┌─────────────────────────────────────────────────────────────┐
-│                  Runtime (llama-server)                     │
-│              (Prism-compatible llama.cpp)                   │
-└─────────────────────────────────────────────────────────────┘
+```text
++----------------------------+        +-----------------------------+        +---------------------------+
+| Frontend (React + Vite)    |  HTTP  | Backend (FastAPI + SQLite)  |  HTTP  | Prism llama-server        |
+|                            +------->|                             +------->| Bonsai GGUF inference     |
+| - Chat UI                  |  SSE   | - API routes                |        | OpenAI-compatible API     |
+| - Sidebar drawer           |<-------+ - Runtime manager           |<-------+ Streaming token responses |
+| - Runtime modal            |        | - Chat proxy                |        +---------------------------+
+| - Setup wizard             |        | - Conversation storage      |
++----------------------------+        +-----------------------------+
 ```
 
-## Component Overview
-
-### Frontend (React + Vite)
+## Frontend
 
 **Location**: `frontend/`
 
-| Component | Responsibility |
-|-----------|----------------|
-| `App.tsx` | Root component, global state |
-| `Sidebar.tsx` | Navigation, conversation list |
-| `MessageList.tsx` | Chat message display |
-| `Composer.tsx` | Message input |
-| `RuntimePanel.tsx` | Runtime controls |
-| `SetupScreen.tsx` | Initial configuration |
+| Module | Responsibility |
+|--------|----------------|
+| `src/App.tsx` | App bootstrap, global UI state, runtime/chat orchestration |
+| `src/components/Sidebar.tsx` | Conversation list, mobile drawer, chat actions |
+| `src/components/MessageList.tsx` | Chat transcript and empty state |
+| `src/components/Composer.tsx` | Prompt input and send action |
+| `src/components/RuntimePanel.tsx` | Runtime modal, presets, model switching, diagnostics, logs |
+| `src/pages/SetupScreen.tsx` | First-run setup, official downloads, local file linking, diagnostics |
+| `src/api/client.ts` | Backend API client and SSE parsing |
+| `src/lib/runtime-config.ts` | Runtime preset and config normalization logic |
+| `src/lib/ui-prefs.ts` | Local UI preference persistence |
 
-**Key Libraries**:
-- React 19 for UI
-- Vite for build tooling
-- Custom API client for backend communication
-
-### Backend (FastAPI)
+## Backend
 
 **Location**: `backend/`
 
 | Module | Responsibility |
 |--------|----------------|
-| `main.py` | FastAPI app, middleware, lifespan |
-| `api/routes_*.py` | REST endpoint definitions |
-| `core/runtime_manager.py` | llama-server lifecycle |
-| `core/chat_service.py` | Chat logic, streaming |
-| `core/config.py` | Settings management |
-| `db/storage.py` | SQLite persistence |
-
-**Key Libraries**:
-- FastAPI for REST API
-- Uvicorn for ASGI server
-- HTTPX for runtime proxy
-- SQLite for data persistence
-
-### Runtime (llama-server)
-
-**Location**: `.bonsai-desk/runtime/`
-
-The Prism-compatible llama-server process that:
-- Loads the GGUF model into memory
-- Provides OpenAI-compatible API
-- Handles inference requests
-- Supports GPU acceleration via CUDA
+| `app/main.py` | FastAPI app, CORS, OpenAPI, shutdown cleanup |
+| `app/api/routes_runtime.py` | Runtime lifecycle, install flow, diagnostics, local asset linking |
+| `app/api/routes_models.py` | Bonsai model listing, selection, and install |
+| `app/api/routes_conversations.py` | Conversation CRUD |
+| `app/api/routes_chat.py` | SSE streaming chat endpoint |
+| `app/core/runtime_manager.py` | Runtime process lifecycle, installation, model resolution, diagnostics |
+| `app/core/model_catalog.py` | Official Bonsai model variants |
+| `app/core/chat_service.py` | Prompt forwarding and streamed response persistence |
+| `app/core/schemas.py` | API and persistence data models |
+| `app/db/storage.py` | SQLite persistence for chats and runtime config |
 
 ## Data Flow
 
-### Chat Message Flow
+### App Bootstrap
 
-```
-1. User types message in Composer
-2. Frontend POST /api/v1/chat/stream
-3. Backend saves message to SQLite
-4. Backend forwards to llama-server
-5. llama-server streams tokens
-6. Backend proxies stream to frontend
-7. Frontend displays streaming text
-8. Backend saves response on completion
+```text
+1. Frontend calls GET /api/runtime/overview
+2. Backend returns status, config, models, install progress, sources, and diagnostics
+3. Frontend loads conversations
+4. UI shows either Setup Wizard or Chat Shell based on runtime/model availability
 ```
 
-### Runtime Startup Flow
+### Chat Streaming
 
-```
-1. User clicks "Start Runtime"
-2. Frontend POST /api/v1/runtime/start
-3. Backend validates model exists
-4. Backend spawns llama-server process
-5. Backend polls for health check
-6. Backend returns success/failure
-7. Frontend shows runtime status
-```
-
-### Conversation Persistence Flow
-
-```
-1. User creates new chat
-2. Frontend POST /api/v1/conversations
-3. Backend inserts into SQLite
-4. User sends message
-5. Backend updates conversation timestamp
-6. On page reload, GET /conversations returns list
+```text
+1. User sends a prompt from Composer
+2. Frontend POSTs /api/chat/stream
+3. Backend stores the user message in SQLite
+4. Backend forwards the prompt to Prism llama-server
+5. Runtime streams completion chunks
+6. Backend proxies SSE token events to the browser
+7. Backend stores the assistant response when generation completes
+8. Frontend refreshes the conversation after done/error
 ```
 
-## Technology Stack
+### Runtime Setup and Model Switching
 
-### Backend Stack
-
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Framework | FastAPI | REST API framework |
-| Server | Uvicorn | ASGI server |
-| Database | SQLite | Data persistence |
-| HTTP Client | HTTPX | Runtime proxy |
-| Process Mgmt | asyncio.subprocess | Runtime control |
-
-### Frontend Stack
-
-| Layer | Technology | Purpose |
-|-------|------------|---------|
-| Framework | React 19 | UI library |
-| Language | TypeScript | Type safety |
-| Build Tool | Vite | Bundling, dev server |
-| Styling | CSS Modules | Component styles |
-
-### Runtime Stack
-
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| Inference | llama.cpp | GGUF model inference |
-| API | OpenAI-compatible | Chat completions |
-| GPU | CUDA (optional) | Acceleration |
-
-## Storage Layer
-
-### SQLite Schema
-
-**Conversations Table**:
-```sql
-CREATE TABLE conversations (
-    id TEXT PRIMARY KEY,
-    title TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+```text
+1. Setup Wizard or Runtime Modal calls /api/models/select or /api/models/install
+2. Backend updates the selected Bonsai variant and resolves the managed/local model path
+3. /api/runtime/install downloads the selected model and runtime when needed
+4. /api/runtime/start launches llama-server with the persisted config
 ```
 
-**Messages Table**:
-```sql
-CREATE TABLE messages (
-    id TEXT PRIMARY KEY,
-    conversation_id TEXT REFERENCES conversations(id),
-    role TEXT CHECK(role IN ('user', 'assistant', 'system')),
-    content TEXT NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
+## Storage
 
-**Settings Table**:
-```sql
-CREATE TABLE settings (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### File Storage
-
-```
+```text
 .bonsai-desk/
-├── bonsai_desk.db          # SQLite database
-├── settings.json           # Runtime configuration
-├── runtime/
-│   └── llama-server.exe    # Runtime binary
-└── models/
-    └── Bonsai-8B.gguf      # Model weights
+|-- bonsai_desk.db
+|-- runtime/
+|   |-- bin/llama-server.exe
+|   |-- llama-server.pid
+|   `-- runtime.json
+|-- models/
+|   |-- Bonsai-8B.gguf
+|   |-- Bonsai-4B.gguf
+|   `-- Bonsai-1.7B.gguf
+`-- logs/
+    `-- llama-server.log
 ```
 
-## Runtime Management
+SQLite stores:
 
-### Process Lifecycle
+- Conversations and messages
+- Persisted runtime config
+- Linked local runtime/model paths
 
+## Runtime Lifecycle
+
+```text
+stopped -> starting -> running -> stopping -> stopped
+              |                         |
+              +---------- error --------+
 ```
-Stopped → Starting → Running → Stopping → Stopped
-            ↑___________|          |
-            |______________________|
-                    (error)
-```
 
-### Configuration Persistence
+On backend shutdown, the runtime manager stops `llama-server` and, on Windows, attaches the process to a job object so closing the backend console unloads the model process too.
 
-Runtime parameters are stored in SQLite and applied on startup:
+## Design Constraints
 
-1. User changes settings in UI
-2. Frontend POST /runtime/settings
-3. Backend validates and stores in SQLite
-4. On runtime start, settings are passed as CLI args
-
-### Health Monitoring
-
-The backend monitors runtime health:
-- Polls /health endpoint on llama-server
-- Tracks process PID
-- Restarts on unexpected termination (optional)
-
-## Security Considerations
-
-### Local-Only Design
-
-- API binds to localhost only (127.0.0.1)
-- No authentication required (single-user)
-- CORS restricted to dev server origins
-
-### Data Privacy
-
-- All data stored locally
-- No cloud services (except model downloads)
-- User controls all data
-
-## Scalability Limits
-
-Current design constraints:
-- Single local user
-- One runtime instance
-- SQLite (no concurrent writes)
-- Windows primary platform
-
-Future improvements may address these limits.
+- Local single-user app
+- Localhost-bound API by default
+- Windows-first runtime and file picker UX
+- Desktop packaging is not shipped yet
+- Linux/macOS support is partially prepared in process management, but the setup flow is still Windows-oriented

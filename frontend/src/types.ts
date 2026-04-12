@@ -21,6 +21,8 @@ export interface RuntimeConfig {
   port: number;
   /** Name of the GGUF model file */
   model_filename: string;
+  /** Active Bonsai model variant */
+  model_variant: string;
   /** Optional path to custom runtime binary */
   runtime_binary_path: string | null;
   /** Optional path to custom model file */
@@ -142,6 +144,8 @@ export interface RuntimeOverview {
   install_progress: InstallProgress;
   /** List of upstream asset sources */
   sources: AssetSourceInfo[];
+  /** Structured runtime diagnostics */
+  diagnostics: RuntimeDiagnostics;
 }
 
 /**
@@ -156,6 +160,16 @@ export interface ModelDescriptor {
   filename: string;
   /** Human-readable size hint */
   size_hint: string;
+  /** Bonsai model variant identifier */
+  variant: string;
+  /** Download URL for the model variant */
+  download_url: string;
+  /** Recommended hardware hint */
+  requirements_hint: string;
+  /** Whether this model variant is the active config */
+  is_active: boolean;
+  /** Whether the model file exists locally */
+  is_downloaded: boolean;
   /** Path to local file if installed */
   local_path: string | null;
   /** Whether the model is installed locally */
@@ -242,4 +256,28 @@ export interface ChatStreamEvent {
   delta: string | null;
   /** Error message for error events */
   error: string | null;
+}
+
+/**
+ * Single runtime diagnostic check.
+ */
+export interface RuntimeDiagnosticCheck {
+  id: string;
+  label: string;
+  status: "ok" | "warning" | "error";
+  detail: string;
+  action_hint: string | null;
+}
+
+/**
+ * Aggregated runtime diagnostics.
+ */
+export interface RuntimeDiagnostics {
+  generated_at: string;
+  platform_label: string;
+  gpu_label: string;
+  cuda_label: string;
+  runtime_version: string;
+  checks: RuntimeDiagnosticCheck[];
+  recent_logs: string[];
 }

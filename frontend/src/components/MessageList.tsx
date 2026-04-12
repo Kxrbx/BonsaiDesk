@@ -61,7 +61,7 @@ export function MessageList({ messages, streamingText, isSending }: MessageListP
             <header>
               <span>Bonsai</span>
             </header>
-            <pre>{streamingText || "Thinking..."}</pre>
+            <pre aria-live="polite">{streamingText || "Thinking…"}</pre>
           </article>
         ) : null}
       </div>

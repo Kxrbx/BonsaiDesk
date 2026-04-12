@@ -6,6 +6,7 @@ export function applyRuntimePreset(preset: RuntimePreset, current: RuntimeConfig
   const base = {
     ...current,
     model_filename: current.model_filename || "Bonsai-8B.gguf",
+    model_variant: current.model_variant || "8B",
     ctx_size: 0,
     gpu_layers: 99,
   };
@@ -58,6 +59,7 @@ export function normalizeRuntimeConfig(config: RuntimeConfig): RuntimeConfig {
   return {
     ...config,
     model_filename: config.model_filename?.trim() || "Bonsai-8B.gguf",
+    model_variant: config.model_variant?.trim() || "8B",
     runtime_binary_path: config.runtime_binary_path?.trim() || null,
     model_file_path: config.model_file_path?.trim() || null,
     system_prompt: config.system_prompt?.trim() || "You are a helpful assistant.",

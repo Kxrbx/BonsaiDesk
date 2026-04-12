@@ -27,8 +27,6 @@ Welcome to the Bonsai Desk documentation. This folder contains comprehensive gui
 |----------|-------------|
 | [Contributing](../CONTRIBUTING.md) | Contribution guidelines (root level) |
 | [Changelog](../CHANGELOG.md) | Version history and changes |
-| [Security](../SECURITY.md) | Security policy and vulnerability reporting |
-| [Code of Conduct](../CODE_OF_CONDUCT.md) | Community standards |
 
 ## Quick Links
 

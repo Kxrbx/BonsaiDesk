@@ -45,12 +45,12 @@ export const SystemMessage: Story = {
 export const StreamingMessage: Story = {
   args: {
     role: "assistant",
-    content: "I'm thinking...",
+    content: "I'm thinking…",
     status: "streaming",
   },
 };
 
-export const MessageGroup: Story = {
+export const GroupedMessages: Story = {
   render: () => (
     <MessageGroup>
       <Message

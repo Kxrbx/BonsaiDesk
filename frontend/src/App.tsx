@@ -17,7 +17,9 @@ import type {
   Message,
   ModelDescriptor,
   RuntimeConfig,
-  RuntimeStatus,
+
+   RuntimeDiagnostics,
+   RuntimeStatus
 } from "./types";
 
 type RuntimePanelTab = "runtime" | "parameters" | "logs";
@@ -86,6 +88,7 @@ export default function App() {
   const [installProgress, setInstallProgress] = useState<InstallProgress | null>(null);
   const [assetSources, setAssetSources] = useState<AssetSourceInfo[]>([]);
   const [models, setModels] = useState<ModelDescriptor[]>([]);
+  const [runtimeDiagnostics, setRuntimeDiagnostics] = useState<RuntimeDiagnostics | null>(null);
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
   const [draft, setDraft] = useState("");
@@ -129,6 +132,8 @@ export default function App() {
     setModels(overview.models);
     setInstallProgress(overview.install_progress);
     setAssetSources(overview.sources);
+    setRuntimeDiagnostics(overview.diagnostics);
+    setLogs(overview.diagnostics.recent_logs);
     setIsInstalling(overview.install_progress.state === "running");
   }
 
@@ -157,7 +162,6 @@ export default function App() {
     try {
       setError(null);
       await Promise.all([refreshRuntime(), refreshConversations()]);
-      setLogs(await api.getRuntimeLogs());
     } catch (caughtError) {
       setError((caughtError as Error).message);
     } finally {
@@ -202,6 +206,8 @@ export default function App() {
           setRuntimeConfig(overview.config);
           setModels(overview.models);
           setAssetSources(overview.sources);
+          setRuntimeDiagnostics(overview.diagnostics);
+          setLogs(overview.diagnostics.recent_logs);
 
           if (overview.install_progress.state === "completed" || overview.install_progress.state === "error") {
             setIsInstalling(false);
@@ -342,6 +348,8 @@ export default function App() {
       setModels(overview.models);
       setInstallProgress(overview.install_progress);
       setAssetSources(overview.sources);
+      setRuntimeDiagnostics(overview.diagnostics);
+      setLogs(overview.diagnostics.recent_logs);
     } catch (caughtError) {
       setError((caughtError as Error).message);
     } finally {
@@ -357,6 +365,41 @@ export default function App() {
       setLogs(await api.getRuntimeLogs());
     } catch (caughtError) {
       setError((caughtError as Error).message);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleSelectModelVariant(variant: string) {
+    try {
+      setError(null);
+      setIsBusy(true);
+      const overview = await api.selectModelVariant(variant);
+      setRuntimeStatus(overview.status);
+      setRuntimeConfig(overview.config);
+      setModels(overview.models);
+      setInstallProgress(overview.install_progress);
+      setAssetSources(overview.sources);
+      setRuntimeDiagnostics(overview.diagnostics);
+      setLogs(overview.diagnostics.recent_logs);
+    } catch (caughtError) {
+      setError((caughtError as Error).message);
+    } finally {
+      setIsBusy(false);
+    }
+  }
+
+  async function handleInstallModelVariant(variant: string) {
+    try {
+      setError(null);
+      setIsBusy(true);
+      const progress = await api.installModelVariant(variant);
+      setInstallProgress(progress);
+      setIsInstalling(progress.state === "running");
+      await refreshRuntime();
+    } catch (caughtError) {
+      setError((caughtError as Error).message);
+      setIsInstalling(false);
     } finally {
       setIsBusy(false);
     }
@@ -500,6 +543,7 @@ export default function App() {
 
   if (isHydrating) {
     return (
+
       <main className="min-h-screen bg-[#07111a] text-[#edf5ef]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16">
           <motion.div
@@ -520,6 +564,7 @@ export default function App() {
 
   if (!runtimeStatus || !runtimeConfig) {
     return (
+
       <main className="min-h-screen bg-[#07111a] text-[#edf5ef]">
         <div className="mx-auto flex min-h-screen max-w-3xl items-center px-6 py-16">
           <div className="w-full rounded-[32px] border border-rose-400/20 bg-rose-500/10 p-10 shadow-2xl shadow-black/30 backdrop-blur">
@@ -535,6 +580,7 @@ export default function App() {
     );
   }
 
+
   return (
     <main className="min-h-screen overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(53,109,98,0.28),_transparent_32%),linear-gradient(180deg,_#081018_0%,_#07131c_52%,_#061017_100%)] text-[#edf5ef]">
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
@@ -542,6 +588,7 @@ export default function App() {
         <div className="absolute right-[-5rem] top-24 h-80 w-80 rounded-full bg-emerald-300/10 blur-3xl" />
         <div className="absolute inset-x-0 top-0 h-px bg-white/10" />
       </div>
+
 
       <div className="relative flex min-h-screen flex-col lg:flex-row">
         <motion.aside
@@ -575,6 +622,7 @@ export default function App() {
               </div>
             </div>
           </div>
+
 
           <div className="flex-1 space-y-3 overflow-y-auto px-3 py-4">
             {conversations.length === 0 ? (
@@ -679,6 +727,7 @@ export default function App() {
                 </div>
               </div>
             </motion.header>
+
 
             <div className="grid min-h-0 flex-1 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-h-0 overflow-y-auto px-4 py-4 lg:px-8 lg:py-6">

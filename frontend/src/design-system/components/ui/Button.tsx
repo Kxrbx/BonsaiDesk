@@ -83,7 +83,7 @@ export function Button({
         opacity: isDisabled ? 0.5 : 1,
         width: fullWidth ? "100%" : undefined,
         fontFamily: "var(--font-sans)",
-        transition: "all var(--duration-normal) var(--ease-default)",
+        transition: "background-color var(--duration-normal) var(--ease-default), color var(--duration-normal) var(--ease-default), border-color var(--duration-normal) var(--ease-default), transform var(--duration-normal) var(--ease-default), filter var(--duration-normal) var(--ease-default)",
         ...variantStyles[variant],
         ...sizeStyles[size],
         ...style,

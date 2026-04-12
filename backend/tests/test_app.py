@@ -57,10 +57,13 @@ class AppRoutesTestCase(unittest.TestCase):
         self.assertIn("models", payload)
         self.assertIn("install_progress", payload)
         self.assertIn("sources", payload)
+        self.assertIn("diagnostics", payload)
         self.assertEqual(payload["config"]["model_filename"], "Bonsai-8B.gguf")
-        self.assertGreaterEqual(len(payload["models"]), 1)
+        self.assertEqual(payload["config"]["model_variant"], "8B")
+        self.assertGreaterEqual(len(payload["models"]), 3)
         self.assertEqual(payload["models"][0]["id"], "prism-ml/Bonsai-8B-gguf")
         self.assertGreaterEqual(len(payload["sources"]), 2)
+        self.assertGreaterEqual(len(payload["diagnostics"]["checks"]), 1)
 
     def test_runtime_config_and_conversation_flow(self) -> None:
         config = self.client.get("/api/runtime/config").json()
@@ -117,6 +120,30 @@ class AppRoutesTestCase(unittest.TestCase):
         self.assertEqual(payload["filename"], "Configured-Only.gguf")
         self.assertFalse(payload["installed"])
         self.assertIsNone(payload["local_path"])
+
+    def test_select_model_variant_updates_active_model(self) -> None:
+        selected = self.client.post("/api/models/select", json={"variant": "4B"})
+        self.assertEqual(selected.status_code, 200, selected.text)
+        payload = selected.json()
+        self.assertEqual(payload["config"]["model_variant"], "4B")
+        self.assertEqual(payload["config"]["model_filename"], "Bonsai-4B.gguf")
+        active_models = [model for model in payload["models"] if model["is_active"]]
+        self.assertEqual(len(active_models), 1)
+        self.assertEqual(active_models[0]["variant"], "4B")
+
+        models = self.client.get("/api/models")
+        self.assertEqual(models.status_code, 200, models.text)
+        model_payload = models.json()
+        self.assertGreaterEqual(len(model_payload), 3)
+        self.assertEqual([model["variant"] for model in model_payload if model["is_active"]], ["4B"])
+
+    def test_runtime_diagnostics_endpoint_returns_checks(self) -> None:
+        response = self.client.get("/api/runtime/diagnostics")
+        self.assertEqual(response.status_code, 200, response.text)
+        payload = response.json()
+        self.assertIn("platform_label", payload)
+        self.assertIn("runtime_version", payload)
+        self.assertGreaterEqual(len(payload["checks"]), 1)
 
     def test_new_home_uses_bonsai_database_name(self) -> None:
         config = self.client.get("/api/runtime/config")
