@@ -17,9 +17,8 @@ import type {
   Message,
   ModelDescriptor,
   RuntimeConfig,
-
-   RuntimeDiagnostics,
-   RuntimeStatus
+  RuntimeDiagnostics,
+  RuntimeStatus,
 } from "./types";
 
 type RuntimePanelTab = "runtime" | "parameters" | "logs";
@@ -95,6 +94,7 @@ export default function App() {
   const [streamingText, setStreamingText] = useState("");
   const [logs, setLogs] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [styleDiagnostic, setStyleDiagnostic] = useState<string | null>(null);
   const [isHydrating, setIsHydrating] = useState(true);
   const [isBusy, setIsBusy] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
@@ -171,6 +171,20 @@ export default function App() {
 
   useEffect(() => {
     void bootstrap();
+  }, []);
+
+  useEffect(() => {
+    const probe = document.createElement("div");
+    probe.className = "bg-mint-500 hidden";
+    document.body.appendChild(probe);
+    const backgroundColor = window.getComputedStyle(probe).backgroundColor;
+    document.body.removeChild(probe);
+
+    if (backgroundColor === "rgba(0, 0, 0, 0)" || backgroundColor === "transparent") {
+      const message = "Tailwind styles are not being processed. Reinstall frontend dependencies and restart Vite.";
+      console.error(message);
+      setStyleDiagnostic(message);
+    }
   }, []);
 
   useEffect(() => {
@@ -737,6 +751,12 @@ export default function App() {
                   transition={{ duration: 0.28, ease: "easeOut" }}
                   className="mx-auto flex w-full max-w-5xl flex-col gap-5"
                 >
+                  {styleDiagnostic ? (
+                    <div style={{ border: "1px solid rgba(226, 139, 116, 0.4)", background: "rgba(226, 139, 116, 0.12)", color: "#ffe2d7" }} className="rounded-[24px] px-4 py-3 text-sm">
+                      {styleDiagnostic}
+                    </div>
+                  ) : null}
+
                   {error ? (
                     <div className="rounded-[24px] border border-rose-300/20 bg-rose-300/10 px-4 py-3 text-sm text-rose-100">{error}</div>
                   ) : null}
