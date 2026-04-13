@@ -6,7 +6,7 @@
 [![Python: 3.8+](https://img.shields.io/badge/python-3.8+-3776ab.svg)]()
 [![Node: 18+](https://img.shields.io/badge/node-18+-339933.svg)]()
 
-Local-first chat app for running Bonsai GGUF models (`8B`, `4B`, `1.7B`) with a ChatGPT-like interface, built-in Prism runtime management, model switching, runtime diagnostics, and saved conversation history.
+Local-first chat app for running Bonsai GGUF models (`8B`, `4B`, `1.7B`) with streaming responses, built-in Prism runtime management, model switching, runtime diagnostics, and saved conversation history.
 
 <img width="1690" height="956" alt="Bonsai Desk Interface" src="https://github.com/user-attachments/assets/2cb464c3-60d8-4724-8dbd-5ad79587eb72" />
 
@@ -176,7 +176,7 @@ Hello! Can you explain what you are?
 ## Features
 
 ### Chat Experience
-- ChatGPT-style interface with streaming responses
+- Local-first interface with streaming responses
 - Persistent conversation history
 - Conversation rename/delete actions and a mobile sidebar drawer
 

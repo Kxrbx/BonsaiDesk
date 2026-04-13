@@ -4,6 +4,8 @@
 
 | Version | Supported          |
 | ------- | ------------------ |
+| 0.3.x   | :white_check_mark: |
+| 0.2.x   | :white_check_mark: |
 | 0.1.x   | :white_check_mark: |
 | < 0.1.0 | :x:                |
 
@@ -96,7 +98,7 @@ These are official upstream sources. Always verify:
 ### Security Updates
 
 Security updates will be:
-- Released as patch versions (e.g., 0.1.1)
+- Released as patch versions (e.g., 0.3.1)
 - Documented in CHANGELOG.md
 - Announced via GitHub releases
 
@@ -108,4 +110,4 @@ We thank the following security researchers who have responsibly disclosed vulne
 
 ---
 
-Last updated: 2026-04-02
+Last updated: 2026-04-13
