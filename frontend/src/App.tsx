@@ -174,17 +174,31 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const probe = document.createElement("div");
-    probe.className = "bg-mint-500 hidden";
-    document.body.appendChild(probe);
-    const backgroundColor = window.getComputedStyle(probe).backgroundColor;
-    document.body.removeChild(probe);
+    // The CSS is injected asynchronously by Vite HMR in dev mode. We need to
+    // wait two animation frames + a small timeout so the stylesheet is present
+    // before probing. Using `hidden` (display:none) also prevents some browsers
+    // from computing background-color, so we use visibility+offscreen instead.
+    let timeoutId: ReturnType<typeof setTimeout>;
+    const check = () => {
+      const probe = document.createElement("div");
+      probe.className = "bg-mint-500";
+      probe.style.cssText = "position:absolute;top:-9999px;left:-9999px;visibility:hidden;width:1px;height:1px;";
+      document.body.appendChild(probe);
+      const backgroundColor = window.getComputedStyle(probe).backgroundColor;
+      document.body.removeChild(probe);
 
-    if (backgroundColor === "rgba(0, 0, 0, 0)" || backgroundColor === "transparent") {
-      const message = "Tailwind styles are not being processed. Reinstall frontend dependencies and restart Vite.";
-      console.error(message);
-      setStyleDiagnostic(message);
-    }
+      if (backgroundColor === "rgba(0, 0, 0, 0)" || backgroundColor === "" || backgroundColor === "transparent") {
+        const message = "Tailwind styles are not being processed. Reinstall frontend dependencies and restart Vite.";
+        console.error(message);
+        setStyleDiagnostic(message);
+      }
+    };
+
+    requestAnimationFrame(() => {
+      timeoutId = setTimeout(check, 150);
+    });
+
+    return () => clearTimeout(timeoutId);
   }, []);
 
   useEffect(() => {
