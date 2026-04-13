@@ -101,6 +101,7 @@ export default function App() {
   const [isSending, setIsSending] = useState(false);
   const [showRuntimePanel, setShowRuntimePanel] = useState(initialUiPrefs.showRuntimePanel);
   const [runtimePanelTab, setRuntimePanelTab] = useState<RuntimePanelTab>(initialUiPrefs.runtimeTab);
+  const [hasSentFirstMessage, setHasSentFirstMessage] = useState(initialUiPrefs.hasSentFirstMessage);
   const [runtimePathDraft, setRuntimePathDraft] = useState("");
   const [modelPathDraft, setModelPathDraft] = useState("");
   const abortRef = useRef<AbortController | null>(null);
@@ -205,8 +206,16 @@ export default function App() {
     saveUiPrefs({
       showRuntimePanel,
       runtimeTab: runtimePanelTab,
+      hasSentFirstMessage,
     });
-  }, [showRuntimePanel, runtimePanelTab]);
+  }, [hasSentFirstMessage, showRuntimePanel, runtimePanelTab]);
+
+  useEffect(() => {
+    if (hasSentFirstMessage || visibleMessages.length === 0) {
+      return;
+    }
+    setHasSentFirstMessage(true);
+  }, [hasSentFirstMessage, visibleMessages.length]);
 
   useEffect(() => {
     if (!runtimeConfig) {
@@ -496,6 +505,7 @@ export default function App() {
 
       const content = draft;
       setDraft("");
+      setHasSentFirstMessage(true);
       const controller = new AbortController();
       abortRef.current = controller;
 
@@ -645,7 +655,7 @@ export default function App() {
                 <div className="mt-2 text-sm font-medium text-white">{runtimeStateLabel(runtimeStatus)}</div>
               </div>
               <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Conversations</div>
+                <div className="text-[11px] uppercase tracking-[0.24em] text-slate-400">Chats</div>
                 <div className="mt-2 text-sm font-medium text-white">{conversations.length}</div>
               </div>
             </div>
@@ -895,63 +905,67 @@ export default function App() {
                     </div>
                   </section>
 
-                  <section className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
-                    <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-                      <p className="text-[11px] uppercase tracking-[0.3em] text-amber-200/70">Guided Setup</p>
-                      <h3 className="mt-3 text-xl font-semibold text-white">Keep the desk operator-grade and local-first.</h3>
-                      <div className="mt-5 grid gap-3 md:grid-cols-3">
-                        <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-sm font-medium text-white">1. Link assets</div>
-                          <p className="mt-2 text-sm leading-6 text-slate-300">Use the runtime rail to browse or paste local runtime and model paths.</p>
+                  {!hasSentFirstMessage ? (
+                    <>
+                      <section className="grid gap-5 xl:grid-cols-[1.3fr_0.7fr]">
+                        <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
+                          <p className="text-[11px] uppercase tracking-[0.3em] text-amber-200/70">Guided Setup</p>
+                          <h3 className="mt-3 text-xl font-semibold text-white">Keep the desk operator-grade and local-first.</h3>
+                          <div className="mt-5 grid gap-3 md:grid-cols-3">
+                            <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-sm font-medium text-white">1. Link assets</div>
+                              <p className="mt-2 text-sm leading-6 text-slate-300">Use the runtime rail to browse or paste local runtime and model paths.</p>
+                            </div>
+                            <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-sm font-medium text-white">2. Tune inference</div>
+                              <p className="mt-2 text-sm leading-6 text-slate-300">Switch presets, adjust context and sampling, then save to persist config.</p>
+                            </div>
+                            <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-sm font-medium text-white">3. Run local chat</div>
+                              <p className="mt-2 text-sm leading-6 text-slate-300">Start or restart the runtime without changing the existing backend flow.</p>
+                            </div>
+                          </div>
                         </div>
-                        <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-sm font-medium text-white">2. Tune inference</div>
-                          <p className="mt-2 text-sm leading-6 text-slate-300">Switch presets, adjust context and sampling, then save to persist config.</p>
-                        </div>
-                        <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-sm font-medium text-white">3. Run local chat</div>
-                          <p className="mt-2 text-sm leading-6 text-slate-300">Start or restart the runtime without changing the existing backend flow.</p>
-                        </div>
-                      </div>
-                    </div>
 
-                    <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
-                      <p className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">Trust Signals</p>
-                      <div className="mt-4 space-y-3 text-sm text-slate-300">
-                        <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-white">Endpoint</div>
-                          <div className="mt-1 break-all text-slate-300">{runtimeStatus.health_url}</div>
+                        <div className="rounded-[30px] border border-white/10 bg-white/[0.04] p-6 backdrop-blur">
+                          <p className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">Trust Signals</p>
+                          <div className="mt-4 space-y-3 text-sm text-slate-300">
+                            <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-white">Endpoint</div>
+                              <div className="mt-1 break-all text-slate-300">{runtimeStatus.health_url}</div>
+                            </div>
+                            <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-white">Install progress</div>
+                              <div className="mt-1 text-slate-300">{percent(installProgress?.overall_progress)} - {installProgress?.current_step ?? "Idle"}</div>
+                            </div>
+                            <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
+                              <div className="text-white">Active model</div>
+                              <div className="mt-1 break-all text-slate-300">{runtimeConfig.model_filename}</div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-white">Install progress</div>
-                          <div className="mt-1 text-slate-300">{percent(installProgress?.overall_progress)} - {installProgress?.current_step ?? "Idle"}</div>
-                        </div>
-                        <div className="rounded-[22px] border border-white/10 bg-black/10 p-4">
-                          <div className="text-white">Active model</div>
-                          <div className="mt-1 break-all text-slate-300">{runtimeConfig.model_filename}</div>
-                        </div>
-                      </div>
-                    </div>
-                  </section>
+                      </section>
 
-                  <section className="rounded-[30px] border border-emerald-300/15 bg-[linear-gradient(135deg,rgba(24,57,53,0.72),rgba(8,20,28,0.88))] p-6 shadow-xl shadow-black/20">
-                    <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                      <div>
-                        <p className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">Control Surface</p>
-                        <h3 className="mt-3 text-xl font-semibold text-white">Open the runtime rail for full model, logs, and diagnostics control.</h3>
-                        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-                          Save config, refresh logs, link local files, and operate the runtime without leaving the chat workspace.
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowRuntimePanel(true)}
-                        className="rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 py-3 text-sm font-medium text-emerald-50 transition hover:bg-emerald-300/20"
-                      >
-                        Open runtime rail
-                      </button>
-                    </div>
-                  </section>
+                      <section className="rounded-[30px] border border-emerald-300/15 bg-[linear-gradient(135deg,rgba(24,57,53,0.72),rgba(8,20,28,0.88))] p-6 shadow-xl shadow-black/20">
+                        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                          <div>
+                            <p className="text-[11px] uppercase tracking-[0.3em] text-emerald-200/70">Control Surface</p>
+                            <h3 className="mt-3 text-xl font-semibold text-white">Open the runtime rail for full model, logs, and diagnostics control.</h3>
+                            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
+                              Save config, refresh logs, link local files, and operate the runtime without leaving the chat workspace.
+                            </p>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => setShowRuntimePanel(true)}
+                            className="rounded-full border border-emerald-200/30 bg-emerald-300/10 px-5 py-3 text-sm font-medium text-emerald-50 transition hover:bg-emerald-300/20"
+                          >
+                            Open runtime rail
+                          </button>
+                        </div>
+                      </section>
+                    </>
+                  ) : null}
                 </motion.div>
               </div>
 
