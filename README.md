@@ -8,7 +8,8 @@
 
 Local-first chat app for running Bonsai GGUF models (`8B`, `4B`, `1.7B`) with a ChatGPT-like interface, built-in Prism runtime management, model switching, runtime diagnostics, and saved conversation history.
 
-<img width="1690" height="956" alt="Bonsai Desk Interface" src="https://github.com/user-attachments/assets/2cb464c3-60d8-4724-8dbd-5ad79587eb72" />
+<img width="1904" height="1031" alt="image" src="https://github.com/user-attachments/assets/16241ab0-d624-4927-8b93-b982522b0a01" />
+
 
 ## What is Bonsai Desk?
 
