@@ -12,6 +12,11 @@ frontend/node_modules/
 frontend/dist/
 frontend/*.tsbuildinfo
 frontend/coverage/
+frontend/vite-dev.log
+frontend/vite.config.js
+frontend/vite.config.d.ts
+/README.md.new
+/README_original.md
 backend/.pytest_cache/
 backend/.mypy_cache/
 .prism-launcher/
